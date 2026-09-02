@@ -1,0 +1,23 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "Build with AK",
+  "name_for_model": "build_with_ak",
+  "description_for_human": "Create, customize, and submit product showcases to the Build with AK Customer Directory on agentkit.best.",
+  "description_for_model": "Official plugin and action interface for authoring, validating, previewing, and managing product showcase listings and layout blocks on Build with AK (agentkit.best).",
+  "auth": {
+    "type": "oauth",
+    "client_url": "https://agentkit.best/oauth/authorize",
+    "scope": "build-with-ak:read build-with-ak:write",
+    "authorization_url": "https://agentkit.best/oauth/token",
+    "authorization_content_type": "application/x-www-form-urlencoded",
+    "verification_tokens": {}
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://bwak.agentkit.best/openapi.json",
+    "is_user_authenticated": false
+  },
+  "logo_url": "https://agentkit.best/logo.png",
+  "contact_email": "support@agentkit.best",
+  "legal_info_url": "https://agentkit.best/legal"
+}

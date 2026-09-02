@@ -1,0 +1,16 @@
+{
+  "name": "bestagentkits",
+  "owner": {
+    "name": "AgentKit",
+    "url": "https://agentkit.best"
+  },
+  "plugins": [
+    {
+      "name": "build-with-ak",
+      "source": "./plugin.json",
+      "description": "Create, validate, preview, and submit product showcases to the Build with AK Customer Directory on agentkit.best.",
+      "version": "1.0.0",
+      "category": "developer-tools"
+    }
+  ]
+}
