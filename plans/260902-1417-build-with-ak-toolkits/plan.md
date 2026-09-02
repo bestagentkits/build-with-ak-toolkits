@@ -42,13 +42,13 @@ This toolkit provides:
 
 | # | Phase | Status | Effort |
 |---|-------|--------|--------|
-| 0 | [Phase 0: Contract Provenance, Version Pinning & Upstream Dependency Gate](./phase-00-contract-provenance-and-upstream-dependency-gate.md) | Pending | 3h |
-| 1 | [Phase 1: Core Schemas, Contracts & 5 Template Blueprints](./phase-01-core-schemas-contracts-and-templates.md) | Pending | 4h |
-| 2 | [Phase 2: Universal API Client, Upstream Delegation & 2-Step Media Pipeline](./phase-02-universal-api-client-dual-auth-and-media.md) | Pending | 5h |
-| 3 | [Phase 3: Local Workspace Manager & Preview Engine](./phase-03-local-workspace-and-preview-engine.md) | Pending | 5h |
-| 4 | [Phase 4: CLI Commands Suite & Interactive Terminal Studio](./phase-04-cli-suite-and-terminal-studio.md) | Pending | 6h |
-| 5 | [Phase 5: Stdio & Cloudflare Streamable HTTP MCP Server](./phase-05-stdio-and-cloudflare-mcp-server.md) | Pending | 6h |
-| 6 | [Phase 6: Companion Agent Skill, Documentation & E2E Tests](./phase-06-companion-agent-skill-docs-and-e2e-tests.md) | Pending | 5h |
+| 0 | [Phase 0: Contract Provenance, Version Pinning & Upstream Dependency Gate](./phase-00-contract-provenance-and-upstream-dependency-gate.md) | Completed | 3h |
+| 1 | [Phase 1: Core Schemas, Contracts & 5 Template Blueprints](./phase-01-core-schemas-contracts-and-templates.md) | Completed | 4h |
+| 2 | [Phase 2: Universal API Client, Upstream Delegation & 2-Step Media Pipeline](./phase-02-universal-api-client-dual-auth-and-media.md) | Completed | 5h |
+| 3 | [Phase 3: Local Workspace Manager & Preview Engine](./phase-03-local-workspace-and-preview-engine.md) | Completed | 5h |
+| 4 | [Phase 4: CLI Commands Suite & Interactive Terminal Studio](./phase-04-cli-suite-and-terminal-studio.md) | Completed | 6h |
+| 5 | [Phase 5: Stdio & Cloudflare Streamable HTTP MCP Server](./phase-05-stdio-and-cloudflare-mcp-server.md) | Completed | 6h |
+| 6 | [Phase 6: Companion Agent Skill, Documentation & E2E Tests](./phase-06-companion-agent-skill-docs-and-e2e-tests.md) | Completed | 5h |
 
 ## Architecture & Data Flow
 

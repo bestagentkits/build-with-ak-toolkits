@@ -1,7 +1,7 @@
 ---
 phase: 2
 title: "Universal API Client, Upstream Delegation & 2-Step Media Pipeline"
-status: pending
+status: completed
 priority: P1
 effort: "5h"
 dependencies: [0, 1]

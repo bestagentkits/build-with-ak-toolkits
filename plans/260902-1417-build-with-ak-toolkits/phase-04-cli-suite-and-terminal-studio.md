@@ -1,7 +1,7 @@
 ---
 phase: 4
 title: "CLI Commands Suite & Interactive Terminal Studio"
-status: pending
+status: completed
 priority: P1
 effort: "6h"
 dependencies: [0, 1, 2, 3]

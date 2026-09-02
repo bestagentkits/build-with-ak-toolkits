@@ -1,7 +1,7 @@
 ---
 phase: 1
 title: "Core Schemas, Contracts & 5 Template Blueprints"
-status: pending
+status: completed
 priority: P1
 effort: "4h"
 dependencies: [0]

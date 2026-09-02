@@ -1,7 +1,7 @@
 ---
 phase: 0
 title: "Contract Provenance, Version Pinning & Upstream Dependency Gate"
-status: pending
+status: completed
 priority: P1
 effort: "3h"
 dependencies: []

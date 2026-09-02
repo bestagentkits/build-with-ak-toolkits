@@ -1,7 +1,7 @@
 ---
 phase: 6
 title: "Companion Agent Skill, Documentation & E2E Tests"
-status: pending
+status: completed
 priority: P1
 effort: "5h"
 dependencies: [0, 1, 2, 3, 4, 5]
