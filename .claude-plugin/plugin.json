@@ -1,0 +1,56 @@
+{
+  "name": "build-with-ak",
+  "version": "1.0.0",
+  "description": "Official Claude plugin for drafting, validating, previewing, and submitting product showcases to the Build with AK directory on agentkit.best.",
+  "author": {
+    "name": "AgentKit",
+    "url": "https://agentkit.best"
+  },
+  "homepage": "https://agentkit.best/build-with-ak",
+  "repository": "https://github.com/bestagentkits/build-with-ak-toolkits",
+  "license": "MIT",
+  "keywords": [
+    "agentkit",
+    "build-with-ak",
+    "showcase",
+    "directory",
+    "product-launch",
+    "mcp"
+  ],
+  "userConfig": {
+    "AGENTKIT_API_KEY": {
+      "title": "AgentKit Customer API Key",
+      "type": "string",
+      "description": "AgentKit customer API key (ck_live_...) from the Customer Dashboard at https://agentkit.best",
+      "sensitive": true,
+      "required": false
+    },
+    "AGENTKIT_ENV": {
+      "title": "Target Environment",
+      "type": "string",
+      "description": "Target environment: production or staging",
+      "default": "production",
+      "required": false
+    }
+  },
+  "mcpServers": {
+    "build-with-ak-stdio": {
+      "command": "npx",
+      "args": ["-y", "--package=@bestagentkits/build-with-ak", "build-with-ak-mcp"],
+      "env": {
+        "AGENTKIT_API_KEY": "${user_config.AGENTKIT_API_KEY}",
+        "AGENTKIT_ENV": "${user_config.AGENTKIT_ENV}"
+      }
+    },
+    "build-with-ak-remote": {
+      "type": "http",
+      "url": "https://bwak.agentkit.best/mcp",
+      "headers": {
+        "x-api-key": "${user_config.AGENTKIT_API_KEY}"
+      }
+    }
+  },
+  "skills": [
+    "./skills/build-with-ak"
+  ]
+}

@@ -69,6 +69,7 @@ describe('Phase 5: Cloudflare Worker Streamable HTTP & Dual Auth', () => {
     expect(body.result?.serverInfo?.name).toBe('build-with-ak');
   });
 
+
   it('rejects an OAuth Bearer when OAuth is not configured on the worker', async () => {
     const env: WorkerEnv = {};
     const res = await worker.fetch(initRequest({ Authorization: 'Bearer sometoken' }), env);
