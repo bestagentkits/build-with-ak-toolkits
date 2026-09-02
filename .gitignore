@@ -34,3 +34,6 @@ Thumbs.db
 .vscode/
 *.sublime-project
 *.sublime-workspace
+
+# Wrangler dry-run output
+tmp/
