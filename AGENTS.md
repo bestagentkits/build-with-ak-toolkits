@@ -1,54 +1,30 @@
 # AGENTS.md
 
-This file provides guidance to OpenCode, Claude Code, and other AI coding agents when working with code in this repository.
+Imperative guidance and invariants for AI agents working in `bestagentkits/build-with-ak-toolkits`.
 
-## Project Overview
+## Core Invariants & Boundaries
 
-**Name:** `build-with-ak-toolkits`
-**Repository:** `bestagentkits/build-with-ak-toolkits`
-**Type:** Node.js / TypeScript (CLI & MCP Server)
-**Description:** Official CLI tool and Model Context Protocol (MCP) server for submitting, updating, previewing, and customizing product showcase layouts on the **"Build with AK"** Customer Product Directory on [agentkit.best/build-with-ak](https://agentkit.best/build-with-ak).
+- **Package Namespace**: `@bestagentkits/build-with-ak` (binaries: `build-with-ak`, `build-with-ak-mcp`).
+- **Contract Provenance**: Upstream base contract pinned at commit `500fe6ef`. Never edit `src/contracts/generated/` manually; use `pnpm sync:contracts` and verify with `pnpm check:drift`.
+- **Worker & MCP Edge Safety**: `src/worker.ts` and Cloudflare HTTP transport (`src/mcp/http-services.ts`, `src/auth/`) must remain 100% filesystem-free (`node:fs` prohibited in Worker bundle).
+- **Media Contract**: Image block content must strictly contain finalized `assetId` UUIDs, never raw presigned URLs or local paths.
+- **CAS Atomic Sync**: Draft updates (`push`) must use `PUT /listing` with `expectedDraftRevisionId`. Moderate submissions (`submit`) are frozen and lock revision ID.
+- **Dual Test Profiles**: Run `pnpm test:base` for base 11-endpoint contract checks; `pnpm test:target` includes pending target extensions.
 
----
+## Quality Gates & Verification Commands
 
-## Related Repositories & References
+Run before reporting completion or submitting changes:
 
-### Core Web Platform (Source of Truth)
-- **Repository:** `bestagentkits/ak-web` (GitHub: [https://github.com/bestagentkits/ak-web](https://github.com/bestagentkits/ak-web))
-- **Local Workspace Reference:** `D:\www\claudekit\claudekit-web`
-- **Context & Integration:**
-  - The `ak-web` repository houses the main `agentkit.best` web application and the "Build with AK" directory feature.
-  - When designing CLI payloads, API schemas, layout components, or authentication mechanisms in this repo, ensure full compatibility with the contracts and endpoints defined in `D:\www\claudekit\claudekit-web`.
-  - Reference `ak-web` for schema definitions (product metadata, categories, badges, layout sections, media assets, and submission verification rules).
+```bash
+pnpm typecheck      # TypeScript compilation check (tsc --noEmit)
+pnpm check:drift    # Contract snapshot verification against pinned commit
+pnpm test:base      # Base contract test suite (vitest)
+pnpm test:target    # Full test suite including target extensions
+pnpm build          # Multi-target bundle generation (tsup)
+```
 
----
+## Tooling & Workflow Conventions
 
-## Role & Responsibilities
-
-- **CLI Development:** Provide clean, typed, user-friendly commands (`init`, `preview`, `validate`, `submit`, `layout`) for managing product submissions.
-- **MCP Server:** Expose robust MCP tools, resources, and prompt templates so AI agents can draft product showcase configurations and edit page layouts autonomously on behalf of developers.
-- **Layout Customization Engine:** Maintain modular, extensible layout section schemas (hero, features, live demos, benchmarks, media embeds, pricing, changelog, testimonials).
-- **Quality & Contract Verification:** Ensure strict validation before payload submission against `ak-web` API contracts.
-
----
-
-## Development Principles
-
-- **YAGNI**: You Aren't Gonna Need It - avoid over-engineering.
-- **KISS**: Keep It Simple, Stupid - prefer simple, typed, and idiomatic TypeScript solutions.
-- **DRY**: Don't Repeat Yourself - share common schemas between CLI and MCP server surfaces.
-- **Compatibility**: Ensure parity between local validation and the live `ak-web` backend validation logic.
-
----
-
-## Quality Gates
-
-- Run tests before submitting changes.
-- Ensure all public contracts and CLI/MCP interfaces are properly documented.
-- Follow conventional commits (`feat:`, `fix:`, `refactor:`, `docs:`, `test:`).
-- Never commit secrets, tokens, credentials, or private configuration files.
-
----
-
-*Generated for AgentKit Toolkits Ecosystem*
-*Repository: bestagentkits/build-with-ak-toolkits*
+- **Package Manager**: Use `pnpm` exclusively for local development and dependency management.
+- **Git Commits**: Conventional commits (`feat:`, `fix:`, `refactor:`, `docs:`, `chore:`, `ci:`).
+- **Secrets & Safety**: Never commit `.env`, `AGENTKIT_API_KEY`, `CLOUDFLARE_API_TOKEN`, or private keys.
