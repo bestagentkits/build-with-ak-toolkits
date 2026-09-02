@@ -108,6 +108,23 @@ claude plugin add bestagentkits/build-with-ak-toolkits
 
 ---
 
+## skills.sh (Agent Ecosystem Installation)
+
+Install the skill directly to your AI agent (Claude Code, Cursor, Codex, OpenCode, Amp) using the [skills.sh](https://skills.sh) CLI:
+
+```bash
+# Install to current project
+npx skills add bestagentkits/build-with-ak-toolkits
+
+# Or install globally across all agents
+npx skills add bestagentkits/build-with-ak-toolkits -g -y
+
+# Or use directly without installing
+npx skills use bestagentkits/build-with-ak-toolkits --skill build-with-ak
+```
+
+---
+
 ## OpenAI & ChatGPT Service Discovery
 
 The production Cloudflare Worker serves standard discovery manifests:

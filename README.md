@@ -56,9 +56,20 @@ Install directly via Claude Plugin Marketplace:
 claude plugin add bestagentkits/build-with-ak-toolkits
 ```
 
-### 2. skills.sh (AgentKit Ecosystem)
+### 2. skills.sh (Agent Ecosystem)
 
-Use the native agent skill definition located at [`skills/build-with-ak/SKILL.md`](skills/build-with-ak/SKILL.md) to author and manage showcase listings with coding agents.
+Install the skill to your coding agent (Claude Code, Cursor, Codex, OpenCode, Amp) via [skills.sh](https://skills.sh):
+
+```bash
+# Install to current project
+npx skills add bestagentkits/build-with-ak-toolkits
+
+# Or install globally across all supported agents
+npx skills add bestagentkits/build-with-ak-toolkits -g -y
+
+# Or use directly without installing
+npx skills use bestagentkits/build-with-ak-toolkits --skill build-with-ak
+```
 
 ### 3. Hosted Remote MCP Server (Streamable HTTP)
 
