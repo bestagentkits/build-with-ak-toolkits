@@ -1,0 +1,54 @@
+{
+  "name": "@agentkit/build-with-ak",
+  "version": "1.0.0",
+  "description": "CLI tool and MCP server for submitting and customizing showcase layouts on Build with AK (agentkit.best)",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "build-with-ak": "dist/cli/main.js",
+    "build-with-ak-mcp": "dist/mcp/stdio.js"
+  },
+  "files": [
+    "dist",
+    "skills",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsx watch src/cli/main.ts",
+    "test": "vitest run",
+    "test:base": "vitest run --exclude=\"**/*target-extensions*\"",
+    "test:target": "vitest run",
+    "test:watch": "vitest",
+    "sync:contracts": "tsx scripts/sync-contracts.ts",
+    "check:drift": "tsx scripts/check-contract-drift.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "agentkit",
+    "build-with-ak",
+    "mcp",
+    "mcp-server",
+    "cli",
+    "showcase",
+    "cloudflare-workers"
+  ],
+  "author": "AgentKit",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.6.1",
+    "commander": "^13.1.0",
+    "jose": "^6.0.8",
+    "picocolors": "^1.1.1",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.9",
+    "tsup": "^8.4.0",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.7"
+  }
+}

@@ -1,96 +1,99 @@
 # Build with AK Toolkits 🚀
 
-Official developer CLI and Model Context Protocol (MCP) server for submitting, validating, managing, and customizing showcase layouts for products published on **Build with AK** ([agentkit.best/build-with-ak](https://agentkit.best/build-with-ak)).
+Official developer **CLI** and **Model Context Protocol (MCP) server** for creating, validating, previewing, and submitting product showcases on **Build with AK** ([agentkit.best/build-with-ak](https://agentkit.best/build-with-ak)).
+
+Package: `@agentkit/build-with-ak` · Binaries: `build-with-ak`, `build-with-ak-mcp`
 
 ---
 
-## 🌟 Overview
+## Overview
 
-**Build with AK Toolkits** empowers creators, developers, and AI agents to seamlessly publish and maintain their product showcases on AgentKit's official directory. Whether deploying a new AI tool built with AgentKit or updating showcase layouts, this toolkit provides a first-class developer and agentic experience.
+Build with AK Toolkits lets developers and AI coding agents publish rich, block-based product showcases to the AgentKit directory — from the terminal, from an interactive TUI studio, or autonomously via MCP.
 
-### Key Capabilities
-
-- 🛠️ **Showcase CLI**: Command-line interface to create, validate, preview, submit, and update product listings and rich showcase layouts.
-- 🤖 **Showcase MCP Server**: Model Context Protocol integration enabling AI coding agents (OpenCode, Claude Code, Cursor, Windsurf) to draft product metadata, design layout blocks, and submit listings autonomously with developer oversight.
-- 🎨 **Layout Customization**: Rich block-based layout builder (hero, features, live demos, benchmarks, media embeds, testimonials, tech stack, and changelog).
-- ✅ **Schema Validation**: Automated pre-submission validation ensuring compatibility with `agentkit.best` directory standards.
-
----
-
-## 🏗️ Architecture & Modules
-
-```
-build-with-ak-toolkits/
-├── src/
-│   ├── cli/           # CLI tool implementation
-│   ├── mcp/           # MCP Server (tools, resources, prompts)
-│   ├── schema/        # Product metadata and layout component schemas
-│   └── client/        # API client communicating with agentkit.best
-├── docs/              # Technical documentation and specs
-├── AGENTS.md          # AI agent conventions and references
-└── README.md
-```
+- **CLI** — `init`, `template`, `slug`, `media`, `pull`, `validate`, `diff`, `preview`, `push`, `submit`, `studio`.
+- **Terminal Studio** — keyboard-driven TUI for metadata, 9 block types, reorder, and review.
+- **Local preview** — loopback `127.0.0.1` live-reload server and offline static HTML export.
+- **Dual-transport MCP server** — local `stdio` for Cursor/Claude/OpenCode, and a Cloudflare Workers Streamable HTTP server with OAuth 2.1 (RFC 9728) + `x-api-key`.
+- **9 layout blocks, 5 curated templates** — schema-parity with the `ak-web` backend; media fields require finalized asset UUIDs.
+- **Atomic CAS push & frozen submit** — single-call `PUT /listing` with `expectedDraftRevisionId`, and moderation-frozen `POST /submit`.
 
 ---
 
-## 🚀 Quick Start
-
-### Installation
+## Quick Start
 
 ```bash
-# Using npm
-npm install -g @bestagentkits/build-with-ak-toolkits
+# Install
+npm install -g @agentkit/build-with-ak      # or: pnpm add -g / bun add -g
 
-# Using pnpm
-pnpm add -g @bestagentkits/build-with-ak-toolkits
+# Configure your customer API key (generate at agentkit.best → Customer Dashboard)
+export AGENTKIT_API_KEY=ck_live_...
+export AGENTKIT_ENV=staging                 # or production (default)
 
-# Using bun
-bun add -g @bestagentkits/build-with-ak-toolkits
+# Scaffold a workspace from a template
+build-with-ak init --template saas_product_launch
+
+# Upload media, validate, preview
+build-with-ak media upload ./assets/logo.png --kind logo --ref logo
+build-with-ak validate --ready
+build-with-ak preview --watch
+
+# Push (atomic CAS) then submit for moderation
+build-with-ak push --yes
+build-with-ak submit --yes
 ```
 
-### CLI Usage
+Every command accepts `--json` for machine-readable `{ ok, data?, error? }` output and standardized exit codes (`0` ok, `2` validation, `3` auth, `4` not found, `5` CAS conflict, `6` network).
 
-```bash
-# Authenticate with AgentKit account
-ak-showcase auth login
+---
 
-# Initialize a new product showcase configuration
-ak-showcase init
+## MCP Setup (local stdio)
 
-# Preview showcase layout locally
-ak-showcase preview
-
-# Validate product metadata and layout schema
-ak-showcase validate
-
-# Submit or update showcase listing
-ak-showcase submit
-```
-
-### MCP Server Configuration
-
-Add to your MCP settings file (e.g. `claude_desktop_config.json` or `opencode.json`):
+Add to your MCP client config (Claude Desktop, Cursor, Claude Code, OpenCode):
 
 ```json
 {
   "mcpServers": {
     "build-with-ak": {
-      "command": "npx",
-      "args": ["-y", "@bestagentkits/build-with-ak-toolkits", "mcp"]
+      "command": "build-with-ak-mcp",
+      "env": { "AGENTKIT_API_KEY": "ck_live_...", "AGENTKIT_ENV": "staging" }
     }
   }
 }
 ```
 
----
-
-## 🔗 Related Repositories & Context
-
-- **Main Web Application**: [`bestagentkits/ak-web`](https://github.com/bestagentkits/ak-web) (Local: `D:\www\claudekit\claudekit-web`)
-  - Contains the core "Build with AK" customer product directory, backend API routes, showcase rendering engine, and database models.
+See [`docs/mcp-setup.md`](docs/mcp-setup.md) for per-client instructions and the Cloudflare Streamable HTTP remote URL.
 
 ---
 
-## 📄 License
+## Documentation
 
-MIT © [AgentKit Team](https://agentkit.best)
+- [Quickstart](docs/quickstart.md)
+- [CLI Reference](docs/cli-reference.md)
+- [MCP Setup](docs/mcp-setup.md)
+- [Cloudflare Deployment](docs/cloudflare-deployment.md)
+- [OAuth 2.1 Configuration](docs/oauth-configuration.md)
+- [Block Schemas](docs/block-schemas.md)
+- [Media Guide](docs/media-guide.md)
+- Agent Skill: [`skills/build-with-ak/SKILL.md`](skills/build-with-ak/SKILL.md)
+
+---
+
+## Development
+
+```bash
+pnpm install
+pnpm test:base      # base 11-endpoint contract suite (100% green)
+pnpm test:target    # target extension endpoints (media library, slug availability)
+pnpm build          # bundle CLI, MCP stdio, worker, and library
+pnpm typecheck
+pnpm sync:contracts # re-pin wire schemas from ak-web (intentional contract upgrades only)
+pnpm check:drift    # verify committed snapshots match the pinned commit
+```
+
+Wire schemas are pinned from [`bestagentkits/ak-web`](https://github.com/bestagentkits/ak-web) at commit `500fe6ef` and committed under `src/contracts/generated/` with provenance digests in `src/contracts/provenance.ts`.
+
+---
+
+## License
+
+MIT © [AgentKit](https://agentkit.best)
