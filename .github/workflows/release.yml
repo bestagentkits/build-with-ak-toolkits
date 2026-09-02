@@ -135,4 +135,5 @@ jobs:
       - name: Publish to NPM via Trusted Publisher (OIDC Provenance)
         if: ${{ github.event.inputs.tag_only != 'true' }}
         run: |
+          npm install -g npm@latest
           npm publish --provenance --access public
