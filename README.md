@@ -46,11 +46,23 @@ Every command accepts `--json` for machine-readable `{ ok, data?, error? }` outp
 
 ---
 
-## MCP Setup
+## Agent & Marketplace Integrations
 
-### 1. Hosted Remote Server (Streamable HTTP)
+### 1. Claude Code & Claude Desktop Plugin
 
-Connect directly to the production MCP server on Cloudflare Workers:
+Install directly via Claude Plugin Marketplace:
+
+```bash
+claude plugin add bestagentkits/build-with-ak-toolkits
+```
+
+### 2. skills.sh (AgentKit Ecosystem)
+
+Use the native agent skill definition located at [`skills/build-with-ak/SKILL.md`](skills/build-with-ak/SKILL.md) to author and manage showcase listings with coding agents.
+
+### 3. Hosted Remote MCP Server (Streamable HTTP)
+
+Connect any Streamable HTTP MCP client (Cursor, Claude, OpenCode, Windsurf) to the production edge endpoint:
 
 ```json
 {
@@ -66,22 +78,33 @@ Connect directly to the production MCP server on Cloudflare Workers:
 }
 ```
 
-### 2. Local stdio
+### 4. Local stdio MCP Server
 
-Add to your MCP client config (Claude Desktop, Cursor, Claude Code, OpenCode):
+Add to your local MCP client configuration:
 
 ```json
 {
   "mcpServers": {
     "build-with-ak": {
-      "command": "build-with-ak-mcp",
-      "env": { "AGENTKIT_API_KEY": "ck_live_...", "AGENTKIT_ENV": "staging" }
+      "command": "npx",
+      "args": ["-y", "--package=@bestagentkits/build-with-ak", "build-with-ak-mcp"],
+      "env": {
+        "AGENTKIT_API_KEY": "ck_live_...",
+        "AGENTKIT_ENV": "production"
+      }
     }
   }
 }
 ```
 
-See [`docs/mcp-setup.md`](docs/mcp-setup.md) for per-client instructions and configuration details.
+### 5. OpenAI / ChatGPT Service Discovery
+
+The live Cloudflare Worker provides standard discovery and schema manifests:
+
+- **AI Plugin Manifest**: `https://bwak.agentkit.best/.well-known/ai-plugin.json`
+- **OpenAPI 3.1.0 Specification**: `https://bwak.agentkit.best/openapi.json`
+- **OAuth 2.1 Metadata (RFC 9728)**: `https://bwak.agentkit.best/.well-known/oauth-protected-resource`
+- **Service Index**: `https://bwak.agentkit.best/`
 
 ---
 
