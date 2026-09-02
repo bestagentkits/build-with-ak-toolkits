@@ -46,7 +46,27 @@ Every command accepts `--json` for machine-readable `{ ok, data?, error? }` outp
 
 ---
 
-## MCP Setup (local stdio)
+## MCP Setup
+
+### 1. Hosted Remote Server (Streamable HTTP)
+
+Connect directly to the production MCP server on Cloudflare Workers:
+
+```json
+{
+  "mcpServers": {
+    "build-with-ak": {
+      "type": "http",
+      "url": "https://bwak.agentkit.best/mcp",
+      "headers": {
+        "x-api-key": "ck_live_..."
+      }
+    }
+  }
+}
+```
+
+### 2. Local stdio
 
 Add to your MCP client config (Claude Desktop, Cursor, Claude Code, OpenCode):
 
@@ -61,7 +81,7 @@ Add to your MCP client config (Claude Desktop, Cursor, Claude Code, OpenCode):
 }
 ```
 
-See [`docs/mcp-setup.md`](docs/mcp-setup.md) for per-client instructions and the Cloudflare Streamable HTTP remote URL.
+See [`docs/mcp-setup.md`](docs/mcp-setup.md) for per-client instructions and configuration details.
 
 ---
 
@@ -72,6 +92,7 @@ See [`docs/mcp-setup.md`](docs/mcp-setup.md) for per-client instructions and the
 - [MCP Setup](docs/mcp-setup.md)
 - [Cloudflare Deployment](docs/cloudflare-deployment.md)
 - [OAuth 2.1 Configuration](docs/oauth-configuration.md)
+- [Release & NPM Publishing](docs/release-and-publishing.md)
 - [Block Schemas](docs/block-schemas.md)
 - [Media Guide](docs/media-guide.md)
 - Agent Skill: [`skills/build-with-ak/SKILL.md`](skills/build-with-ak/SKILL.md)
