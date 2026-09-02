@@ -50,6 +50,15 @@ Multi-tenant deployments omit the service key and require each caller to send th
 wrangler deploy
 ```
 
+## Automated Deployment (GitHub Actions CI/CD)
+
+The repository includes automated deployment via `.github/workflows/ci.yml`. On every push to `main`, the CI workflow executes all tests, typechecks, verifies contract snapshot drift, and deploys the worker using `cloudflare/wrangler-action`.
+
+To enable automated deployment, configure the following GitHub Actions secrets in your repository (**Settings $\rightarrow$ Secrets and variables $\rightarrow$ Actions**):
+
+- `CLOUDFLARE_API_TOKEN`: A Cloudflare API token with **Account.Workers Scripts: Edit** and **Account.Workers KV Storage: Edit** permissions.
+- `CLOUDFLARE_ACCOUNT_ID`: Your Cloudflare Account ID (available on the Cloudflare dashboard).
+
 ## Verify
 
 ```bash
