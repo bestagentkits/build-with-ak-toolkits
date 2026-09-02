@@ -76,3 +76,13 @@ export function extractBearerToken(authorizationHeader: string | null): string |
   const match = /^Bearer\s+(.+)$/i.exec(authorizationHeader.trim());
   return match ? match[1] : undefined;
 }
+
+/**
+ * Scope enforcement for a validated Bearer token. A token with no scope claim
+ * is accepted (some authorization servers omit it); a token that carries scopes
+ * must include at least one of the required scopes.
+ */
+export function hasRequiredScope(tokenScopes: string[] | undefined, requiredScopes: string[]): boolean {
+  if (!tokenScopes || tokenScopes.length === 0) return true;
+  return tokenScopes.some((s) => requiredScopes.includes(s));
+}

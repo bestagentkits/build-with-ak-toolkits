@@ -8,6 +8,7 @@ import {
   verifyBearerToken,
   extractBearerToken,
   DEFAULT_SCOPES,
+  hasRequiredScope,
 } from './auth/oauth-worker';
 import { validateApiKeyHeader, readApiKeyHeader } from './auth/api-key-worker';
 
@@ -82,6 +83,24 @@ async function authenticate(request: Request, env: WorkerEnv, url: URL): Promise
     });
     if (!result.valid) {
       return { ok: false, challenge: challenge() };
+    }
+    // Enforce scope: when the token carries a scope claim, at least one of the
+    // resource's advertised scopes must be present. A scopeless token is
+    // accepted (some authorization servers omit the claim) but a token scoped
+    // to something else entirely is rejected — the advertised scopes are not
+    // cosmetic.
+    if (!hasRequiredScope(result.scopes, DEFAULT_SCOPES)) {
+      return {
+        ok: false,
+        challenge: jsonResponse(
+          {
+            error: 'insufficient_scope',
+            error_description: `Token scopes [${(result.scopes ?? []).join(' ')}] do not include any of [${DEFAULT_SCOPES.join(' ')}].`,
+          },
+          403,
+          { 'WWW-Authenticate': `Bearer scope="${DEFAULT_SCOPES.join(' ')}", error="insufficient_scope"` }
+        ),
+      };
     }
     if (!env.AGENTKIT_API_KEY) {
       return {

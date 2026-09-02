@@ -35,6 +35,7 @@ For each request with `Authorization: Bearer <jwt>`, the worker verifies:
 - **Issuer** (`iss`) — equals `OAUTH_ISSUER`.
 - **Audience** (`aud`) — equals the worker resource URI (`WORKER_RESOURCE_URL` / origin).
 - **Expiry** (`exp`).
+- **Scope** — if the token carries a `scope` claim, it must include at least one advertised scope (`build-with-ak:read` or `build-with-ak:write`); a token scoped only to unrelated values is rejected with `403 insufficient_scope`. A token with no `scope` claim is accepted (some authorization servers omit it).
 
 Invalid tokens get the 401 challenge.
 
