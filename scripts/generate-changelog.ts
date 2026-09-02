@@ -124,7 +124,7 @@ export function generateReleaseNotes(version: string, commits: CommitInfo[]): st
 
 export function updateChangelog(version: string, releaseNotes: string): void {
   const changelogPath = resolve(process.cwd(), 'CHANGELOG.md');
-  const header = '# Changelog\n\nAll notable changes to `@agentkit/build-with-ak` will be documented in this file.\n\nThe format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).\n\n';
+  const header = '# Changelog\n\nAll notable changes to `@bestagentkits/build-with-ak` will be documented in this file.\n\nThe format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).\n\n';
 
   let currentContent = '';
   if (existsSync(changelogPath)) {

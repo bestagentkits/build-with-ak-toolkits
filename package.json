@@ -1,5 +1,5 @@
 {
-  "name": "@agentkit/build-with-ak",
+  "name": "@bestagentkits/build-with-ak",
   "version": "1.0.0",
   "description": "CLI tool and MCP server for submitting and customizing showcase layouts on Build with AK (agentkit.best)",
   "main": "dist/index.js",

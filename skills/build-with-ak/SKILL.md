@@ -1,6 +1,6 @@
 ---
 name: build-with-ak
-description: Create, validate, preview, and submit a product showcase on the Build with AK directory (agentkit.best) using the @agentkit/build-with-ak CLI or MCP server. Use when a developer wants to publish or refresh their product's showcase page, draft layout blocks, upload media, or submit a listing for moderation.
+description: Create, validate, preview, and submit a product showcase on the Build with AK directory (agentkit.best) using the @bestagentkits/build-with-ak CLI or MCP server. Use when a developer wants to publish or refresh their product's showcase page, draft layout blocks, upload media, or submit a listing for moderation.
 ---
 
 # Build with AK — Product Showcase Authoring

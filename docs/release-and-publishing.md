@@ -1,6 +1,6 @@
 # Release & NPM Publishing Guide
 
-This document outlines the automated release, SemVer versioning, changelog generation, and NPM publishing pipeline for `@agentkit/build-with-ak`.
+This document outlines the automated release, SemVer versioning, changelog generation, and NPM publishing pipeline for `@bestagentkits/build-with-ak`.
 
 ---
 
@@ -31,7 +31,7 @@ The release workflow is fully automated via GitHub Actions (`.github/workflows/r
 
 To enable passwordless, tokenless publishing via GitHub Actions OIDC:
 
-1. Log in to [npmjs.com](https://www.npmjs.com) and navigate to the package **`@agentkit/build-with-ak`** (or create the package first if it's the initial release).
+1. Log in to [npmjs.com](https://www.npmjs.com) and navigate to the package **`@bestagentkits/build-with-ak`** (or create the package first if it's the initial release).
 2. Go to **Settings** $\rightarrow$ **Publishing Access** $\rightarrow$ **Trusted Publishers**.
 3. Click **Add Trusted Publisher** $\rightarrow$ Select **GitHub Actions**.
 4. Configure the parameters:

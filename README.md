@@ -2,7 +2,7 @@
 
 Official developer **CLI** and **Model Context Protocol (MCP) server** for creating, validating, previewing, and submitting product showcases on **Build with AK** ([agentkit.best/build-with-ak](https://agentkit.best/build-with-ak)).
 
-Package: `@agentkit/build-with-ak` · Binaries: `build-with-ak`, `build-with-ak-mcp`
+Package: `@bestagentkits/build-with-ak` · Binaries: `build-with-ak`, `build-with-ak-mcp`
 
 ---
 
@@ -23,7 +23,7 @@ Build with AK Toolkits lets developers and AI coding agents publish rich, block-
 
 ```bash
 # Install
-npm install -g @agentkit/build-with-ak      # or: pnpm add -g / bun add -g
+npm install -g @bestagentkits/build-with-ak      # or: pnpm add -g / bun add -g
 
 # Configure your customer API key (generate at agentkit.best → Customer Dashboard)
 export AGENTKIT_API_KEY=ck_live_...

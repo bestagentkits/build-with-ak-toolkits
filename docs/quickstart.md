@@ -5,7 +5,7 @@ Publish a product showcase in ~5 minutes.
 ## 1. Install
 
 ```bash
-npm install -g @agentkit/build-with-ak
+npm install -g @bestagentkits/build-with-ak
 ```
 
 ## 2. Get an API key
