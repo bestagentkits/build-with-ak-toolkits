@@ -3,7 +3,7 @@
 The toolkit ships a dual-transport MCP server:
 
 - **Local `stdio`** — `build-with-ak-mcp` binary, for IDE agents. Exposes local workspace tools (local-path media upload, workspace draft resource).
-- **Remote Streamable HTTP** — a Cloudflare Worker at `https://<worker>/mcp`, for hosted/remote clients. Payload-based media upload only.
+- **Remote Streamable HTTP** — a Cloudflare Worker at `https://bwak.agentkit.best/mcp`, for hosted/remote clients. Payload-based media upload only.
 
 Both expose the same core tools, resources, and prompts.
 
@@ -93,3 +93,26 @@ stdio-only: `build_with_ak_upload_media_file` (reads a local workspace path).
 ## Prompts
 
 `draft_product_showcase`, `curate_layout_blocks`, `prepare_submission`.
+
+---
+
+## Claude Plugins Integration
+
+The repository includes `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` for Claude Code and Claude Desktop plugin discovery.
+
+To install as a Claude Code plugin:
+
+```bash
+claude plugin add bestagentkits/build-with-ak-toolkits
+```
+
+---
+
+## OpenAI & ChatGPT Service Discovery
+
+The production Cloudflare Worker serves standard discovery manifests:
+
+- **AI Plugin Manifest**: `https://bwak.agentkit.best/.well-known/ai-plugin.json`
+- **OpenAPI 3.1.0 Specification**: `https://bwak.agentkit.best/openapi.json`
+- **OAuth 2.1 Protected Resource Metadata**: `https://bwak.agentkit.best/.well-known/oauth-protected-resource`
+- **Service Index**: `https://bwak.agentkit.best/`
