@@ -1,0 +1,138 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: 'SemVer release bump type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+          - prerelease
+        default: 'patch'
+      custom_version:
+        description: 'Explicit version override (e.g. 1.1.0 — overrides bump)'
+        required: false
+        type: string
+      tag_only:
+        description: 'Only create GitHub Release & tag (skip npm publish)'
+        required: false
+        type: boolean
+        default: false
+  push:
+    tags:
+      - 'v*.*.*'
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    name: Release & Publish to NPM
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Quality Gates (Typecheck, Drift Check, Tests)
+        run: |
+          pnpm typecheck
+          pnpm check:drift
+          pnpm test:base
+
+      - name: Build packages
+        run: pnpm build
+
+      - name: Determine target SemVer version
+        id: versioning
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ -n "${{ github.event.inputs.custom_version }}" ]; then
+              TARGET_VERSION="${{ github.event.inputs.custom_version }}"
+              npm version "$TARGET_VERSION" --no-git-tag-version --allow-same-version
+            else
+              TARGET_VERSION=$(npm version ${{ github.event.inputs.bump }} --no-git-tag-version)
+              TARGET_VERSION=${TARGET_VERSION#v}
+            fi
+            pnpm install --no-frozen-lockfile
+          else
+            # Tag push event (e.g. v1.0.1)
+            TAG_NAME="${{ github.ref_name }}"
+            TARGET_VERSION="${TAG_NAME#v}"
+            npm version "$TARGET_VERSION" --no-git-tag-version --allow-same-version
+          fi
+
+          echo "version=$TARGET_VERSION" >> "$GITHUB_OUTPUT"
+          echo "Target Release Version: $TARGET_VERSION"
+
+      - name: Generate Changelog & Release Notes
+        run: |
+          npx tsx scripts/generate-changelog.ts "${{ steps.versioning.outputs.version }}"
+
+      - name: Commit, Tag and Push Release
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          TARGET_VERSION: ${{ steps.versioning.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json pnpm-lock.yaml CHANGELOG.md
+
+          if ! git diff --staged --quiet; then
+            git commit -m "chore(release): v${TARGET_VERSION}"
+            git tag -a "v${TARGET_VERSION}" -m "Release v${TARGET_VERSION}"
+            git push origin HEAD:${{ github.ref_name }} --follow-tags
+          else
+            if ! git rev-parse "v${TARGET_VERSION}" >/dev/null 2>&1; then
+              git tag -a "v${TARGET_VERSION}" -m "Release v${TARGET_VERSION}"
+              git push origin "v${TARGET_VERSION}"
+            fi
+          fi
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TARGET_VERSION: ${{ steps.versioning.outputs.version }}
+        run: |
+          if [ -f RELEASE_NOTES.md ]; then
+            gh release create "v${TARGET_VERSION}" \
+              --title "v${TARGET_VERSION}" \
+              --notes-file RELEASE_NOTES.md \
+              --verify-tag || true
+          else
+            gh release create "v${TARGET_VERSION}" \
+              --title "v${TARGET_VERSION}" \
+              --generate-notes \
+              --verify-tag || true
+          fi
+
+      - name: Publish to NPM via Trusted Publisher (OIDC Provenance)
+        if: ${{ github.event.inputs.tag_only != 'true' }}
+        run: |
+          npm publish --provenance --access public

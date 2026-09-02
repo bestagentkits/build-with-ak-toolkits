@@ -15,6 +15,10 @@
     "README.md",
     "LICENSE"
   ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "scripts": {
     "build": "tsup",
     "dev": "tsx watch src/cli/main.ts",
@@ -25,6 +29,7 @@
     "sync:contracts": "tsx scripts/sync-contracts.ts",
     "check:drift": "tsx scripts/check-contract-drift.ts",
     "typecheck": "tsc --noEmit",
+    "changelog": "tsx scripts/generate-changelog.ts",
     "prepublishOnly": "pnpm build"
   },
   "keywords": [

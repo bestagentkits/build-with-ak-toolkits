@@ -37,3 +37,7 @@ Thumbs.db
 
 # Wrangler dry-run output
 tmp/
+
+# Release artifacts & Wrangler cache
+RELEASE_NOTES.md
+.wrangler/
