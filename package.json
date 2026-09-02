@@ -24,7 +24,8 @@
     "test:watch": "vitest",
     "sync:contracts": "tsx scripts/sync-contracts.ts",
     "check:drift": "tsx scripts/check-contract-drift.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "pnpm build"
   },
   "keywords": [
     "agentkit",
