@@ -71,7 +71,7 @@ Point a Streamable-HTTP-capable client at the deployed worker URL and authentica
   "mcpServers": {
     "build-with-ak-remote": {
       "type": "http",
-      "url": "https://build-with-ak-mcp.<subdomain>.workers.dev/mcp",
+      "url": "https://bwak.agentkit.best/mcp",
       "headers": { "x-api-key": "ck_live_..." }
     }
   }

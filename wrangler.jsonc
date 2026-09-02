@@ -5,6 +5,12 @@
   "main": "src/worker.ts",
   "compatibility_date": "2025-03-01",
   "compatibility_flags": ["nodejs_compat"],
+  "routes": [
+    {
+      "pattern": "bwak.agentkit.best",
+      "custom_domain": true
+    }
+  ],
   "observability": {
     "enabled": true
   },
@@ -13,7 +19,7 @@
     "AGENTKIT_ENV": "production",
     "OAUTH_ISSUER": "https://agentkit.best",
     "OAUTH_JWKS_URL": "https://agentkit.best/.well-known/jwks.json",
-    "OAUTH_AUTH_SERVERS": "https://agentkit.best"
-    // "WORKER_RESOURCE_URL": "https://build-with-ak-mcp.<your-subdomain>.workers.dev"
+    "OAUTH_AUTH_SERVERS": "https://agentkit.best",
+    "WORKER_RESOURCE_URL": "https://bwak.agentkit.best"
   }
 }
