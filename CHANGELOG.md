@@ -4,6 +4,20 @@ All notable changes to `@bestagentkits/build-with-ak` will be documented in this
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] - 2026-09-12
+
+### 🚀 Features
+
+- feat(oauth): delegate hosted MCP requests per user (7808798)
+
+### 🔧 Maintenance & Tooling
+
+- chore: merge current main into OAuth branch (15ef767)
+
+### 📝 Other Changes
+
+- Merge pull request #13 from bestagentkits/codex/mcp-oauth (4c31787)
+
 ## [1.0.2] - 2026-09-12
 
 ### 🚀 Features
