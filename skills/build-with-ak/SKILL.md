@@ -17,14 +17,16 @@ Publish a rich, block-based product showcase to the **Build with AK** directory.
 
 ## Setup
 
-The developer needs a customer API key (`ck_live_...`) from the agentkit.best Customer Dashboard.
+For hosted MCP, configure only `https://bwak.agentkit.best/mcp` in an OAuth-capable client and complete its normal browser sign-in and consent flow. Analytics needs `build-with-ak:read`; request `build-with-ak:write` only when performing writes. Never ask the user to paste browser cookies, access tokens, or the Worker client secret.
+
+CLI and local stdio still use a customer API key (`ck_live_...`) from the agentkit.best Customer Dashboard. Legacy hosted clients may send that key as `x-api-key`.
 
 ```bash
 export AGENTKIT_API_KEY=ck_live_...
 export AGENTKIT_ENV=staging      # validate on staging before production
 ```
 
-Hosted toolkit MCP uses `https://bwak.agentkit.best/mcp` with an `x-api-key` header. This is separate from the optional webmcp.dev connection inside the website's active Studio editor. That browser bridge edits the open draft through Studio autosave and cannot submit or publish; its connection token is not an API key. Do not interchange tool names or arguments between the two integrations.
+Hosted toolkit MCP uses `https://bwak.agentkit.best/mcp` with browser OAuth or a legacy `x-api-key` header. This is separate from the optional webmcp.dev connection inside the website's active Studio editor. That browser bridge edits the open draft through Studio autosave and cannot submit or publish; its connection token is not an API key. Do not interchange tool names or arguments between the two integrations.
 
 ## Standard workflow (new showcase)
 

@@ -1,4 +1,4 @@
-import { Transport, type FetchLike, type RequestOptions } from './transport';
+import { Transport, type ClientCredential, type FetchLike, type RequestOptions } from './transport';
 import { BuildWithAkCapabilityError, BuildWithAkValidationError } from './errors';
 import { analyticsQuerySchema, type AnalyticsQuery, type ListingAnalyticsResponse } from '../contracts/analytics';
 export type { AnalyticsQuery, AnalyticsMetrics, ListingAnalyticsResponse } from '../contracts/analytics';
@@ -20,8 +20,7 @@ export interface ClientCapabilities {
   targetExtensions: boolean;
 }
 
-export interface BuildWithAkClientConfig {
-  apiKey: string;
+export type BuildWithAkClientConfig = ClientCredential & {
   environment?: BuildWithAkEnvironment;
   baseUrl?: string;
   fetch?: FetchLike;
@@ -104,10 +103,8 @@ export class BuildWithAkClient {
   constructor(config: BuildWithAkClientConfig) {
     const baseUrl = config.baseUrl ?? BASE_URLS[config.environment ?? 'production'];
     this.transport = new Transport({
-      apiKey: config.apiKey,
+      ...config,
       baseUrl,
-      fetch: config.fetch,
-      timeoutMs: config.timeoutMs,
     });
     this.capabilities = {
       targetExtensions: config.capabilities?.targetExtensions ?? false,

@@ -64,19 +64,20 @@ Set `AGENTKIT_TARGET_EXTENSIONS=1` to enable the target-contract tools (`check_s
 
 ## Remote (Cloudflare Streamable HTTP)
 
-Point a Streamable-HTTP-capable client at the deployed worker URL and authenticate with `x-api-key` or an OAuth 2.1 Bearer token.
+Add the URL to an OAuth-capable Streamable HTTP client. Follow the normal browser sign-in and consent flow; no API key is needed for hosted OAuth. Analytics requests read access by default. Writes require separate `build-with-ak:write` consent.
 
 ```json
 {
   "mcpServers": {
     "build-with-ak-remote": {
       "type": "http",
-      "url": "https://bwak.agentkit.best/mcp",
-      "headers": { "x-api-key": "ck_live_..." }
+      "url": "https://bwak.agentkit.best/mcp"
     }
   }
 }
 ```
+
+For legacy clients, add `"headers": { "x-api-key": "ck_live_..." }`. Do not combine API-key and Bearer headers. Local stdio keeps API-key configuration.
 
 See [Cloudflare Deployment](cloudflare-deployment.md) and [OAuth Configuration](oauth-configuration.md).
 
@@ -84,7 +85,7 @@ See [Cloudflare Deployment](cloudflare-deployment.md) and [OAuth Configuration](
 
 The optional [webmcp.dev](https://webmcp.dev/) connection in the website's active Studio editor is a separate browser integration. It connects the open editor to a local WebMCP bridge using a fresh connection token. Its tools read and edit that editor's draft through the existing Studio autosave, with no submit or publish operation. Keep the editor open and inspect its save state before considering an edit persisted.
 
-Use `https://bwak.agentkit.best/mcp` with `x-api-key` for the toolkit's hosted Streamable HTTP transport. Do not put a browser WebMCP token in `x-api-key`, use the browser bridge as the HTTP endpoint, or assume its tool names/arguments match `build_with_ak_*` tools. The browser integration requires an active Studio session; hosted HTTP and local toolkit stdio use API credentials independently of that editor.
+Use `https://bwak.agentkit.best/mcp` with browser OAuth or a legacy `x-api-key` for the toolkit's hosted Streamable HTTP transport. Do not put a browser WebMCP token in `x-api-key`, use the browser bridge as the HTTP endpoint, or assume its tool names/arguments match `build_with_ak_*` tools. The browser integration requires an active Studio session; hosted HTTP and local toolkit stdio use API credentials independently of that editor.
 
 ## Tools
 

@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { hasRequiredScope, DEFAULT_SCOPES, buildWwwAuthenticate } from '../../src/auth/oauth-worker';
 
-describe('Phase 5: OAuth Bearer scope enforcement', () => {
-  it('accepts a scopeless token (authorization server omitted the claim)', () => {
-    expect(hasRequiredScope(undefined, DEFAULT_SCOPES)).toBe(true);
-    expect(hasRequiredScope([], DEFAULT_SCOPES)).toBe(true);
+describe('OAuth Bearer scope enforcement', () => {
+  it('rejects missing scopes', () => {
+    expect(hasRequiredScope(undefined, DEFAULT_SCOPES)).toBe(false);
+    expect(hasRequiredScope([], DEFAULT_SCOPES)).toBe(false);
   });
 
   it('accepts a token that carries at least one required scope', () => {

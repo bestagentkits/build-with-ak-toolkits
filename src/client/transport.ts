@@ -9,8 +9,11 @@ import {
 
 export type FetchLike = typeof fetch;
 
-export interface TransportConfig {
-  apiKey: string;
+export type ClientCredential =
+  | { apiKey: string; delegatedAccessToken?: never }
+  | { apiKey?: never; delegatedAccessToken: string };
+
+export type TransportConfig = ClientCredential & {
   baseUrl: string;
   fetch?: FetchLike;
   timeoutMs?: number;
@@ -74,13 +77,18 @@ function mapErrorResponse(status: number, envelope: ErrorEnvelope | undefined): 
 }
 
 export class Transport {
-  private readonly apiKey: string;
+  private readonly credentialHeaders: Record<string, string>;
   private readonly baseUrl: string;
   private readonly fetchImpl: FetchLike;
   private readonly defaultTimeoutMs: number;
 
   constructor(config: TransportConfig) {
-    this.apiKey = config.apiKey;
+    if (Boolean(config.apiKey) === Boolean(config.delegatedAccessToken)) {
+      throw new BuildWithAkError('Exactly one API credential is required.', 401, 'INVALID_CREDENTIAL');
+    }
+    this.credentialHeaders = config.delegatedAccessToken
+      ? { Authorization: `Bearer ${config.delegatedAccessToken}` }
+      : { 'x-api-key': config.apiKey! };
     this.baseUrl = config.baseUrl.replace(/\/+$/, '');
     this.fetchImpl = resolveFetch(config.fetch);
     this.defaultTimeoutMs = config.timeoutMs ?? 30000;
@@ -97,9 +105,7 @@ export class Transport {
 
   async request<T>(req: TransportRequest): Promise<T> {
     const url = this.buildUrl(req.path, req.query);
-    const headers: Record<string, string> = {
-      'x-api-key': this.apiKey,
-    };
+    const headers = { ...this.credentialHeaders };
 
     const init: RequestInit = {
       method: req.method,

@@ -22,9 +22,12 @@
   ],
   "security": [
     { "ApiKeyAuth": [] },
-    { "OAuth2": ["build-with-ak:read", "build-with-ak:write"] }
+    { "OAuth2": ["build-with-ak:read"] }
   ],
   "paths": {
+    "/.well-known/oauth-protected-resource/mcp": {
+      "$ref": "#/paths/~1.well-known~1oauth-protected-resource"
+    },
     "/api/build-with-ak/listing/analytics": {
       "get": {
         "summary": "Get owned product page analytics",

@@ -15,11 +15,11 @@
     "enabled": true
   },
   "vars": {
-    // Non-secret configuration. Set secrets (AGENTKIT_API_KEY) via `wrangler secret put`.
+    // Non-secret configuration. Set secrets (OAUTH_CLIENT_SECRET) via `wrangler secret put`.
     "AGENTKIT_ENV": "production",
     "OAUTH_ISSUER": "https://agentkit.best",
     "OAUTH_JWKS_URL": "https://agentkit.best/.well-known/jwks.json",
     "OAUTH_AUTH_SERVERS": "https://agentkit.best",
-    "WORKER_RESOURCE_URL": "https://bwak.agentkit.best"
+    "WORKER_RESOURCE_URL": "https://bwak.agentkit.best/mcp"
   }
 }

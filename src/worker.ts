@@ -11,12 +11,17 @@ import {
   hasRequiredScope,
 } from './auth/oauth-worker';
 import { validateApiKeyHeader, readApiKeyHeader } from './auth/api-key-worker';
+import type { ClientCredential } from './client/transport';
+import { API_RESOURCE, exchangeAccessToken, TokenExchangeError } from './auth/token-exchange';
+import { requiredMcpScopes } from './mcp/tool-scopes';
 import { analyticsOpenApiOperation, analyticsOpenApiSchemas } from './contracts/analytics-openapi';
 
 export interface WorkerEnv {
   AGENTKIT_ENV?: string;
-  /** Optional service API key enabling OAuth single-tenant self-deploy (never a customer secret in shared deployments). */
+  /** Deprecated: ignored. OAuth never delegates through a shared API key. */
   AGENTKIT_API_KEY?: string;
+  /** Confidential token-exchange client credential, provisioned as a Worker secret. */
+  OAUTH_CLIENT_SECRET?: string;
   OAUTH_ISSUER?: string;
   OAUTH_JWKS_URL?: string;
   OAUTH_AUTH_SERVERS?: string;
@@ -31,7 +36,7 @@ const OPENAPI_PATH = '/openapi.json';
 const HEALTH_PATH = '/health';
 
 function resourceUrl(env: WorkerEnv, url: URL): string {
-  return env.WORKER_RESOURCE_URL ?? url.origin;
+  return new URL('/mcp', env.WORKER_RESOURCE_URL ?? url.origin).href;
 }
 
 function authServers(env: WorkerEnv): string[] {
@@ -41,7 +46,7 @@ function authServers(env: WorkerEnv): string[] {
 }
 
 function buildAiPluginManifest(env: WorkerEnv, url: URL) {
-  const origin = resourceUrl(env, url);
+  const origin = new URL(resourceUrl(env, url)).origin;
   const authServer = authServers(env)[0] ?? 'https://agentkit.best';
   return {
     schema_version: 'v1',
@@ -52,7 +57,7 @@ function buildAiPluginManifest(env: WorkerEnv, url: URL) {
     auth: {
       type: 'oauth',
       client_url: `${authServer}/oauth/authorize`,
-      scope: 'build-with-ak:read build-with-ak:write',
+      scope: 'build-with-ak:read',
       authorization_url: `${authServer}/oauth/token`,
       authorization_content_type: 'application/x-www-form-urlencoded',
       verification_tokens: {},
@@ -88,10 +93,13 @@ export function buildOpenApiSpec(origin: string) {
     servers: [{ url: origin, description: 'Production Cloudflare Worker Edge Server' }],
     security: [
       { ApiKeyAuth: [] },
-      { OAuth2: ['build-with-ak:read', 'build-with-ak:write'] },
+      { OAuth2: ['build-with-ak:read'] },
     ],
     paths: {
       '/api/build-with-ak/listing/analytics': analyticsOpenApiOperation,
+      '/.well-known/oauth-protected-resource/mcp': {
+        $ref: '#/paths/~1.well-known~1oauth-protected-resource',
+      },
       '/': {
         get: {
           summary: 'Service Index & Discovery',
@@ -354,80 +362,67 @@ function jsonResponse(body: unknown, status = 200, headers: Record<string, strin
 
 interface AuthOutcome {
   ok: boolean;
-  apiKey?: string;
+  credential?: ClientCredential;
   challenge?: Response;
 }
 
 async function authenticate(request: Request, env: WorkerEnv, url: URL): Promise<AuthOutcome> {
-  const metadataUrl = `${resourceUrl(env, url)}${METADATA_PATH}`;
-  const challenge = () =>
-    jsonResponse(
-      { error: 'unauthorized', error_description: 'Authentication required.' },
-      401,
-      { 'WWW-Authenticate': buildWwwAuthenticate(metadataUrl) }
-    );
-
-  // Lane 1: customer x-api-key passthrough (multi-tenant base lane).
+  const metadataUrl = `${new URL(resourceUrl(env, url)).origin}${METADATA_PATH}/mcp`;
+  const challenge = (status = 401, error = 'invalid_token', scopes: string[] | undefined = status === 401 ? ['build-with-ak:read'] : undefined) => jsonResponse(
+    { error, error_description: status === 401 ? 'Authentication required.' : 'OAuth authorization unavailable or insufficient.' },
+    status,
+    { 'Cache-Control': 'private, no-store', 'WWW-Authenticate': `${buildWwwAuthenticate(metadataUrl)}${['invalid_token', 'invalid_request', 'insufficient_scope'].includes(error) ? `, error="${error}"` : ''}${scopes ? `, scope="${scopes.join(' ')}"` : ''}` }
+  );
   const apiKeyHeader = readApiKeyHeader(request.headers);
+  const bearer = extractBearerToken(request.headers.get('Authorization'));
+  if (apiKeyHeader && request.headers.has('Authorization')) {
+    return { ok: false, challenge: challenge(400, 'invalid_request') };
+  }
   if (apiKeyHeader) {
     const validation = validateApiKeyHeader(apiKeyHeader);
-    if (validation.valid && validation.apiKey) {
-      return { ok: true, apiKey: validation.apiKey };
-    }
-    return { ok: false, challenge: jsonResponse({ error: 'invalid_api_key', error_description: validation.reason }, 401) };
+    return validation.valid && validation.apiKey
+      ? { ok: true, credential: { apiKey: validation.apiKey } }
+      : { ok: false, challenge: challenge() };
   }
-
-  // Lane 2: OAuth 2.1 Bearer (RS role). Base contract has no upstream token
-  // exchange, so a valid Bearer authorizes use of the worker's own configured
-  // service key (single-tenant self-deploy). Without that key, fail closed.
-  const bearer = extractBearerToken(request.headers.get('Authorization'));
-  if (bearer) {
-    if (!env.OAUTH_ISSUER || !env.OAUTH_JWKS_URL) {
-      return { ok: false, challenge: jsonResponse({ error: 'oauth_not_configured', error_description: 'OAuth is not configured on this worker.' }, 403) };
+  if (!bearer) return { ok: false, challenge: challenge() };
+  if (!env.OAUTH_ISSUER || !env.OAUTH_JWKS_URL) {
+    return { ok: false, challenge: challenge(403, 'oauth_not_configured') };
+  }
+  const result = await verifyBearerToken(bearer, {
+    issuer: env.OAUTH_ISSUER,
+    audience: resourceUrl(env, url),
+    jwksUrl: env.OAUTH_JWKS_URL,
+  });
+  if (!result.valid) return { ok: false, challenge: challenge() };
+  let requiredScopes = DEFAULT_SCOPES;
+  if (request.method === 'POST') {
+    try {
+      const message: unknown = await request.clone().json();
+      if (Array.isArray(message)) return { ok: false, challenge: challenge(400, 'invalid_request') };
+      requiredScopes = requiredMcpScopes(message);
+    } catch {
+      return { ok: false, challenge: challenge(400, 'invalid_request') };
     }
-    const result = await verifyBearerToken(bearer, {
-      issuer: env.OAUTH_ISSUER,
-      audience: resourceUrl(env, url),
-      jwksUrl: env.OAUTH_JWKS_URL,
+  }
+  if (!hasRequiredScope(result.scopes, requiredScopes)) {
+    return { ok: false, challenge: challenge(403, 'insufficient_scope', requiredScopes) };
+  }
+  if (!env.OAUTH_CLIENT_SECRET) {
+    return { ok: false, challenge: challenge(503, 'temporarily_unavailable') };
+  }
+  try {
+    const delegated = await exchangeAccessToken({
+      subjectToken: bearer, clientSecret: env.OAUTH_CLIENT_SECRET,
+      issuer: env.OAUTH_ISSUER, scopes: result.scopes!,
     });
-    if (!result.valid) {
-      return { ok: false, challenge: challenge() };
+    if (!hasRequiredScope(delegated.scopes, requiredScopes)) {
+      return { ok: false, challenge: challenge(403, 'insufficient_scope', requiredScopes) };
     }
-    // Enforce scope: when the token carries a scope claim, at least one of the
-    // resource's advertised scopes must be present. A scopeless token is
-    // accepted (some authorization servers omit the claim) but a token scoped
-    // to something else entirely is rejected — the advertised scopes are not
-    // cosmetic.
-    if (!hasRequiredScope(result.scopes, DEFAULT_SCOPES)) {
-      return {
-        ok: false,
-        challenge: jsonResponse(
-          {
-            error: 'insufficient_scope',
-            error_description: `Token scopes [${(result.scopes ?? []).join(' ')}] do not include any of [${DEFAULT_SCOPES.join(' ')}].`,
-          },
-          403,
-          { 'WWW-Authenticate': `Bearer scope="${DEFAULT_SCOPES.join(' ')}", error="insufficient_scope"` }
-        ),
-      };
-    }
-    if (!env.AGENTKIT_API_KEY) {
-      return {
-        ok: false,
-        challenge: jsonResponse(
-          {
-            error: 'upstream_delegation_unavailable',
-            error_description:
-              'OAuth Bearer is valid but this worker has no configured service key. Deploy with AGENTKIT_API_KEY (single-tenant) or send x-api-key.',
-          },
-          403
-        ),
-      };
-    }
-    return { ok: true, apiKey: env.AGENTKIT_API_KEY };
+    return { ok: true, credential: { delegatedAccessToken: delegated.accessToken } };
+  } catch (error) {
+    const failure = error instanceof TokenExchangeError ? error : new TokenExchangeError(503, 'temporarily_unavailable');
+    return { ok: false, challenge: challenge(failure.status, failure.code, failure.code === 'insufficient_scope' ? requiredScopes : undefined) };
   }
-
-  return { ok: false, challenge: challenge() };
 }
 
 /**
@@ -438,13 +433,13 @@ async function authenticate(request: Request, env: WorkerEnv, url: URL): Promise
 export default {
   async fetch(request: Request, env: WorkerEnv, _ctx?: unknown): Promise<Response> {
     const url = new URL(request.url);
-    const origin = resourceUrl(env, url);
+    const origin = new URL(resourceUrl(env, url)).origin;
 
     if (request.method === 'GET') {
-      if (url.pathname === METADATA_PATH) {
+      if (url.pathname === METADATA_PATH || url.pathname === `${METADATA_PATH}/mcp`) {
         return jsonResponse(
           buildProtectedResourceMetadata({
-            resource: origin,
+            resource: resourceUrl(env, url),
             authorizationServers: authServers(env),
             scopes: DEFAULT_SCOPES,
           })
@@ -473,12 +468,12 @@ export default {
       return jsonResponse({ error: 'not_found' }, 404);
     }
     const auth = await authenticate(request, env, url);
-    if (!auth.ok || !auth.apiKey) {
+    if (!auth.ok || !auth.credential) {
       return auth.challenge ?? jsonResponse({ error: 'unauthorized' }, 401);
     }
 
     const environment: BuildWithAkEnvironment = env.AGENTKIT_ENV === 'staging' ? 'staging' : 'production';
-    const client = new BuildWithAkClient({ apiKey: auth.apiKey, environment });
+    const client = new BuildWithAkClient({ ...auth.credential, environment, ...(auth.credential.delegatedAccessToken ? { baseUrl: API_RESOURCE } : {}) });
     const services = createHttpServices({ client });
     const server = createMcpServer(services);
 
@@ -491,6 +486,7 @@ export default {
     await server.connect(transport);
 
     const response = await transport.handleRequest(request);
+    response.headers.set('Cache-Control', 'private, no-store');
 
     // In JSON mode the body is fully materialized, so the per-request server can
     // be closed now. In SSE mode the body is a stream still being written by

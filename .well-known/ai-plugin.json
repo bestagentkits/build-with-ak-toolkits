@@ -7,7 +7,7 @@
   "auth": {
     "type": "oauth",
     "client_url": "https://agentkit.best/oauth/authorize",
-    "scope": "build-with-ak:read build-with-ak:write",
+    "scope": "build-with-ak:read",
     "authorization_url": "https://agentkit.best/oauth/token",
     "authorization_content_type": "application/x-www-form-urlencoded",
     "verification_tokens": {}
