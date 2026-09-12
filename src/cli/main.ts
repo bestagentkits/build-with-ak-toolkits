@@ -7,6 +7,7 @@ import { runTemplateList, runTemplateApply } from './commands/template';
 import { runSlugCheck } from './commands/slug';
 import { runMediaList, runMediaUpload } from './commands/media';
 import { runPull } from './commands/pull';
+import { runAnalytics } from './commands/analytics';
 import { runValidate } from './commands/validate';
 import { runDiff } from './commands/diff';
 import { runPreview } from './commands/preview';
@@ -100,6 +101,16 @@ export function buildProgram(): Command {
     .description('pull the remote listing and blocks into the local workspace')
     .action(async (_opts, command: Command) => {
       process.exitCode = await runPull(contextFrom(command));
+    });
+
+  program
+    .command('analytics')
+    .description('read your product page analytics (no local workspace required)')
+    .option('--listing-id <uuid>', 'owned listing UUID (defaults to your active listing)')
+    .option('--from <YYYY-MM-DD>', 'inclusive UTC start date (defaults to 29 days before to)')
+    .option('--to <YYYY-MM-DD>', 'inclusive UTC end date (defaults to today; maximum range 366 days)')
+    .action(async (opts, command: Command) => {
+      process.exitCode = await runAnalytics(contextFrom(command), { listingId: opts.listingId, from: opts.from, to: opts.to });
     });
 
   program

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { analyticsQuerySchema } from '../contracts/analytics';
 import type { BuildWithAkClient, MediaKind, MediaMimeType } from '../client/client';
 import { BuildWithAkError } from '../client/errors';
 import type { AuthoringDocument } from '../project/authoring-schema';
@@ -32,6 +33,7 @@ export interface McpToolDefinition {
   title: string;
   description: string;
   inputSchema: z.ZodObject<z.ZodRawShape>;
+  annotations?: { readOnlyHint: boolean; destructiveHint: boolean; idempotentHint: boolean; openWorldHint: boolean };
   handler: (args: unknown) => Promise<McpToolResult>;
 }
 
@@ -61,6 +63,14 @@ const mediaMimeSchema = z.enum(['image/png', 'image/jpeg', 'image/webp']);
 
 export function createTools(services: McpServices): McpToolDefinition[] {
   const tools: McpToolDefinition[] = [
+    {
+      name: 'build_with_ak_get_analytics',
+      title: 'Get Product Page Analytics',
+      description: 'Read owner-only first-party analytics: totals and zero-filled daily view/click counts in UTC (default last 30 days, maximum 366). Optional listingId selects a historical owned listing. Views deduplicate IP + user agent per day; clicks count redirect requests. Referral conversions are null: tracking is not instrumented. Report unavailable; do not infer conversions, conversion rates, or external product sales.',
+      inputSchema: analyticsQuerySchema,
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+      handler: (args) => guard(async () => ok(await services.getClient().getAnalytics(analyticsQuerySchema.parse(args)))),
+    },
     {
       name: 'build_with_ak_get_listing',
       title: 'Get Listing',

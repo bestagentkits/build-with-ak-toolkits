@@ -47,6 +47,13 @@ Run the 3-step upload pipeline and print the `assetId`. Persists `{ assetId, loc
 ### `pull`
 Pull the remote listing and blocks into the workspace and record the revision baseline.
 
+### `analytics [--from <YYYY-MM-DD>] [--to <YYYY-MM-DD>] [--listing-id <uuid>]`
+Read owner-only analytics with existing credentials; no workspace, `init`, or `pull` is required. Global `--api-key` works on its own and `--json` returns the complete response under `data`: listing ID/slug (both strings), period, source, generatedAt, totals, and ascending zero-filled daily rows.
+
+Dates are inclusive UTC. `to` defaults to today, `from` defaults to 29 days before `to`; maximum 366 days, no future end date. Without `--listing-id`, the API selects the active non-rejected/non-archived listing. An explicit UUID can select a historical owned listing. No owned listing and cross-owner IDs both return 404 (exit 4).
+
+`views` deduplicate per listing/IP + user agent/day, not across days; `outboundClicks` count redirect requests, not unique visitors; `referralConversions` is always `null` in totals and every daily row because conversion tracking is not instrumented. Human output shows unavailable. Do not infer conversions, conversion rates, or external product sales. Invalid dates/ranges return exit 2, auth 401/403 exit 3, and rate limits/server failures exit 6. This additive endpoint requires a supporting upstream deployment but no target-extension flag.
+
 ### `validate [--ready]`
 Default: permissive draft check (`authoringDraftSchema`). `--ready`: compile to wire format and run strict submission-readiness (`submissionReadinessSchema`).
 

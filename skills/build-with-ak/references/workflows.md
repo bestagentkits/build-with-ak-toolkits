@@ -25,6 +25,7 @@
 | Step | CLI | MCP tool |
 |---|---|---|
 | Read listing | `pull` | `build_with_ak_get_listing`, `build_with_ak_get_blocks` |
+| Read analytics | `analytics [--from YYYY-MM-DD] [--to YYYY-MM-DD] [--listing-id UUID]` | `build_with_ak_get_analytics` |
 | List templates | `template list` | `build_with_ak_list_templates` |
 | Apply template | `template apply` | `build_with_ak_apply_template` |
 | Slug check | `slug check` | `build_with_ak_check_slug_availability` (target) |
@@ -40,3 +41,4 @@
 - `draft_product_showcase` — interview + seed a template from repo evidence.
 - `curate_layout_blocks` — optimize order and verify claim evidence.
 - `prepare_submission` — validate readiness, resolve media UUIDs, request approval.
+- `review_product_analytics` — retrieve first-party views/clicks and explain UTC trends. Referral conversions are unavailable (`null`); tracking is not instrumented. Do not infer conversions, conversion rates, or external sales.

@@ -27,6 +27,7 @@ export function createMcpServer(services: McpServices): McpServer {
         title: tool.title,
         description: tool.description,
         inputSchema: tool.inputSchema.shape,
+        annotations: tool.annotations,
       },
       async (args: unknown) => {
         const result = await tool.handler(args);
