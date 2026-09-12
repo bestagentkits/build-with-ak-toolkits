@@ -5,6 +5,8 @@ import { verifyBearerToken } from '../../src/auth/oauth-worker';
 import { createTools, type McpServices } from '../../src/mcp/tools';
 import { MCP_TOOL_SCOPES } from '../../src/mcp/tool-scopes';
 import { BuildWithAkClient } from '../../src/client/client';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 
 const keyState = vi.hoisted(() => ({ jwks: undefined as ReturnType<typeof createLocalJWKSet> | undefined }));
 vi.mock('jose', async (importOriginal) => {
@@ -72,6 +74,62 @@ describe('OAuth access token validation', () => {
 });
 
 describe('Per-user Worker OAuth delegation', () => {
+  it.each([false, true])('completes an SDK OAuth handshake, discovery and read call with JSON mode %s', async (jsonMode) => {
+    const subject = await token({ scope: 'build-with-ak:read' });
+    upstream.mockImplementation(async (url: URL | string) => String(url).endsWith('/oauth/token')
+      ? Response.json(exchangeBody('delegated-owner-a', 'build-with-ak:read'))
+      : Response.json({ listing: { id: 'owner-a-listing' } }));
+    const messages: string[] = [];
+    const responses: { method: string; status: number; contentType: string | null }[] = [];
+    const provider = {
+      redirectUrl: 'http://127.0.0.1:3000/callback',
+      clientMetadata: { redirect_uris: ['http://127.0.0.1:3000/callback'], token_endpoint_auth_method: 'none' as const },
+      clientInformation: () => ({ client_id: 'browser-client' }),
+      tokens: vi.fn(() => ({ access_token: subject, token_type: 'Bearer' })),
+      saveTokens: vi.fn(), redirectToAuthorization: vi.fn(), saveCodeVerifier: vi.fn(),
+      codeVerifier: () => 'unused-existing-access-token',
+    };
+    const transport = new StreamableHTTPClientTransport(new URL(resource), {
+      authProvider: provider,
+      fetch: async (input, init) => {
+        const req = new Request(input, init);
+        expect(req.headers.get('Authorization')).toBe(`Bearer ${subject}`);
+        expect(req.headers.has('x-api-key')).toBe(false);
+        const method = req.method === 'POST' ? (await req.clone().json()).method as string : req.method;
+        if (req.method === 'POST') messages.push(method);
+        const response = await worker.fetch(req, { ...env, MCP_JSON_RESPONSE: jsonMode ? 'true' : undefined });
+        responses.push({ method, status: response.status, contentType: response.headers.get('content-type') });
+        return response;
+      },
+    });
+    const client = new Client({ name: 'oauth-sdk-client', version: '1.0.0' });
+    try {
+      await client.connect(transport);
+      expect(client.getServerVersion()?.name).toBe('build-with-ak');
+      const tools = await client.listTools();
+      expect(tools.tools.some(tool => tool.name === 'build_with_ak_get_listing')).toBe(true);
+      const result = await client.callTool({ name: 'build_with_ak_get_listing', arguments: {} });
+      expect(result.isError).not.toBe(true);
+      expect(result.content).toEqual([{ type: 'text', text: JSON.stringify({ listing: { id: 'owner-a-listing' } }, null, 2) }]);
+      expect(messages).toEqual(['initialize', 'notifications/initialized', 'tools/list', 'tools/call']);
+      expect(responses.find(response => response.method === 'notifications/initialized')?.status).toBe(202);
+      for (const method of ['initialize', 'tools/list', 'tools/call']) {
+        expect(responses.find(response => response.method === method)).toMatchObject({
+          status: 200, contentType: expect.stringContaining(jsonMode ? 'application/json' : 'text/event-stream'),
+        });
+      }
+      const exchanges = upstream.mock.calls.filter(([url]) => String(url).endsWith('/oauth/token'));
+      expect(exchanges.length).toBeGreaterThanOrEqual(4);
+      for (const [, init] of exchanges) expect((init.body as URLSearchParams).get('subject_token')).toBe(subject);
+      const apiCalls = upstream.mock.calls.filter(([url]) => !String(url).endsWith('/oauth/token'));
+      expect(apiCalls).toHaveLength(1);
+      expect(new Headers(apiCalls[0]![1].headers).get('Authorization')).toBe('Bearer delegated-owner-a');
+      expect(provider.redirectToAuthorization).not.toHaveBeenCalled();
+      expect(provider.saveTokens).not.toHaveBeenCalled();
+    } finally {
+      await client.close();
+    }
+  });
   it('exchanges once and sends only the delegated credential upstream', async () => {
     const subject = await token();
     const response = await worker.fetch(request(subject, 'tools/call', { name: 'build_with_ak_get_listing', arguments: {} }), env);
