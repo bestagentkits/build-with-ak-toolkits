@@ -68,7 +68,9 @@ export function createPrompts(): McpPromptDefinition[] {
         userText(
           `Review the current draft blocks (build_with_ak_get_blocks). Improve the narrative order for conversion, ` +
             `ensure every quantitative or superlative claim carries claimEvidence, and confirm each maker_quote has a real ` +
-            `attribution and quoteSource. Use build_with_ak_patch_block and build_with_ak_reorder_blocks. Do not fabricate data.`
+            `attribution and quoteSource. Activities must describe real dated updates with optional public HTTPS links. ` +
+            `Pulse has only type and title; the server monitors the published website, and local preview has no samples. ` +
+            `Read build-with-ak://schemas/blocks for limits. Use build_with_ak_patch_block and build_with_ak_reorder_blocks. Do not fabricate data.`
         ),
       ],
     },

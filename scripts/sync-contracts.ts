@@ -3,12 +3,13 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { execSync } from 'node:child_process';
 
-export const PINNED_COMMIT_SHA = '500fe6ef7a7974acf235c84ad0ebb2f28fb5747c';
+export const PINNED_COMMIT_SHA = '6e548457dba509a39f875cb3fceffb2a5f722a1a';
 export const UPSTREAM_REPO = 'bestagentkits/ak-web';
 
 const CONTRACT_FILES = [
   { remotePath: 'lib/build-with-ak/constants.ts', localFile: 'constants.ts' },
   { remotePath: 'lib/build-with-ak/blocks-schema.ts', localFile: 'blocks-schema.ts' },
+  { remotePath: 'lib/build-with-ak/activity-url.ts', localFile: 'activity-url.ts' },
   { remotePath: 'lib/build-with-ak/validation.ts', localFile: 'validation.ts' },
   { remotePath: 'lib/build-with-ak/slug.ts', localFile: 'slug.ts' },
   { remotePath: 'lib/build-with-ak/media-contract.ts', localFile: 'media-contract.ts' },

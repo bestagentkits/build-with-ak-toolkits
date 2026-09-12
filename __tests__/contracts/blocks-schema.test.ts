@@ -10,8 +10,8 @@ import { BLOCK_TYPES } from '../../src/constants';
 describe('Phase 1: Block Schemas & Sanitization', () => {
   const dummyUUID = '123e4567-e89b-12d3-a456-426614174000';
 
-  it('recognizes all 9 block types', () => {
-    expect(BLOCK_TYPES).toHaveLength(9);
+  it('recognizes all 12 block types', () => {
+    expect(BLOCK_TYPES).toHaveLength(12);
     expect(BLOCK_TYPES).toEqual([
       'hero_banner',
       'columns',
@@ -22,6 +22,9 @@ describe('Phase 1: Block Schemas & Sanitization', () => {
       'carousel_gallery',
       'maker_quote',
       'outbound_cta',
+      'video',
+      'activities',
+      'pulse',
     ]);
   });
 

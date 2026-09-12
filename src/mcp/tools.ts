@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { analyticsQuerySchema } from '../contracts/analytics';
+import { patchBlockSchema } from '../contracts/blocks';
 import type { BuildWithAkClient, MediaKind, MediaMimeType } from '../client/client';
 import { BuildWithAkError } from '../client/errors';
 import type { AuthoringDocument } from '../project/authoring-schema';
@@ -81,7 +82,7 @@ export function createTools(services: McpServices): McpToolDefinition[] {
     {
       name: 'build_with_ak_update_listing',
       title: 'Update Listing (CAS)',
-      description: 'Atomic full-draft save via PUT /listing. Pass expectedDraftRevisionId for CAS protection.',
+      description: 'Atomic full-draft save via PUT /listing, including Activities and Pulse blocks. Pass expectedDraftRevisionId for CAS protection. Activities contain real dated product updates. Pulse accepts only type and title; monitoring is server-managed after publication.',
       inputSchema: upsertListingDraftSchema as unknown as z.ZodObject<z.ZodRawShape>,
       handler: (args) =>
         guard(async () => {
@@ -187,10 +188,10 @@ export function createTools(services: McpServices): McpToolDefinition[] {
       name: 'build_with_ak_patch_block',
       title: 'Patch Block',
       description: 'Quick-edit an individual block content or order.',
-      inputSchema: z.object({ blockId: z.string(), patch: z.record(z.unknown()) }),
+      inputSchema: z.object({ blockId: z.string(), patch: patchBlockSchema }),
       handler: (args) =>
         guard(async () => {
-          const { blockId, patch } = z.object({ blockId: z.string(), patch: z.record(z.unknown()) }).parse(args);
+          const { blockId, patch } = z.object({ blockId: z.string(), patch: patchBlockSchema }).parse(args);
           return ok(await services.getClient().patchBlock(blockId, patch));
         }),
     },

@@ -20,6 +20,15 @@
 5. `build-with-ak push --yes`
 6. Approval → `build-with-ak submit --yes`.
 
+## Activities, Pulse, and video refresh
+
+1. Pull the existing workspace, or read the current listing and blocks through MCP. Preserve the revision baseline and unrelated blocks.
+2. Read `block-catalog.md`. Add real YouTube video URLs or owner-authored Activities with real dates and safe optional HTTPS links. Leave Activities empty if no update evidence exists.
+3. Add Pulse with only its type and title. The published revision's `websiteUrl` determines the monitoring target; never supply client-written checks, health metrics, or a target override.
+4. Edit content in `build-with-ak.json` or use the existing listing/block MCP tools. Terminal Studio can add empty Activities (`u`) and Pulse (`h`), arrange blocks, and save (`s`); content edits use the workspace JSON. There are no block-specific CLI commands or cron tools.
+5. Validate readiness and preview. Activities render newest first; Pulse must show unknown/no checks locally, with no fabricated history.
+6. Review the diff, push with CAS protection, then obtain approval for frozen submission. Monitoring requires the upstream published revision and server cron; pushing or submitting does not prove checks exist.
+
 ## MCP tool mapping
 
 | Step | CLI | MCP tool |
