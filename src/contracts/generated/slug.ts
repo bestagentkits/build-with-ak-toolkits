@@ -69,6 +69,14 @@ export function resolveAvailableSlug(base: string, isTaken: (slug: string) => bo
 }
 
 /**
+ * Suggest an alternative available slug for an unavailable or reserved slug.
+ */
+export function suggestAlternativeSlug(base: string, isTaken: (slug: string) => boolean): string {
+  const cleanBase = slugifyName(base) || 'product';
+  return resolveAvailableSlug(cleanBase, isTaken);
+}
+
+/**
  * Stable content hash for a revision's blocks + metadata. Binds claim
  * verifications to exact content so an edit invalidates stale verifications and
  * publish can only promote verified content.

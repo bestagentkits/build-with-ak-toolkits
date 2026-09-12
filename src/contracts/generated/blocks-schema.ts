@@ -11,6 +11,7 @@
  */
 import { z } from 'zod';
 import { MAX_SCREENSHOTS } from './constants';
+import { isActivityHttpsUrl } from './activity-url';
 
 // Media in blocks references a FINALIZED R2 asset by id, never a raw URL.
 // A caller-supplied `https://…` is rejected here (shape gate); the revision-write
@@ -108,6 +109,42 @@ const outboundCta = z.object({
   // optional field lets a block override the label only, never the policy.
   note: safeText(200).optional(),
 });
+export function parseYouTubeVideoId(url: string): string | null {
+  if (!url || typeof url !== 'string') return null;
+  const trimmed = url.trim();
+  const regExp = /(?:^|\/\/)(?:www\.|m\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})(?:[?&/]|$)/i;
+  const match = trimmed.match(regExp);
+  return match && match[1] ? match[1] : null;
+}
+
+const videoBlock = z.object({
+  type: z.literal('video'),
+  url: z
+    .string()
+    .max(500)
+    .refine((u) => parseYouTubeVideoId(u) !== null, {
+      message: 'Must be a valid YouTube video URL (e.g. https://www.youtube.com/watch?v=... or https://youtu.be/...)',
+    }),
+  title: safeText(120).optional(),
+  caption: safeText(400).optional(),
+});
+
+
+const activities = z.object({
+  type: z.literal('activities'),
+  title: safeText(120).default('Activities'),
+  items: z.array(z.object({
+    title: safeText(120),
+    description: safeText(2000),
+    date: z.string().date('Use a valid date in YYYY-MM-DD format'),
+    url: z.string().max(2000).refine(isActivityHttpsUrl, 'Use a public HTTPS URL without credentials').optional(),
+  })).max(50).default([]),
+});
+
+const pulse = z.object({
+  type: z.literal('pulse'),
+  title: safeText(120).default('Pulse'),
+});
 
 export const blockContentSchema = z.discriminatedUnion('type', [
   heroBanner,
@@ -119,6 +156,9 @@ export const blockContentSchema = z.discriminatedUnion('type', [
   carouselGallery,
   makerQuote,
   outboundCta,
+  videoBlock,
+  activities,
+  pulse,
 ]);
 
 export const blockSchema = z.object({

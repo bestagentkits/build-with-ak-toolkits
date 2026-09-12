@@ -54,7 +54,7 @@ export function createResources(services: McpServices): McpResourceDefinition[] 
       uri: 'build-with-ak://schemas/blocks',
       name: 'blocks-schema',
       title: 'Block Layout Schema',
-      description: 'The 9 supported block types and media/text constraints.',
+      description: 'The 12 supported block types, including Activities, Pulse and video, with media/text constraints.',
       mimeType: 'application/json',
       load: async () =>
         JSON.stringify(
@@ -65,6 +65,13 @@ export function createResources(services: McpServices): McpResourceDefinition[] 
             mediaFields: 'require finalized asset UUID (never raw URLs)',
             allowedImageMime: ALLOWED_IMAGE_MIME,
             mediaLimits: MEDIA_LIMITS,
+            activities: {
+              title: { default: 'Activities', maxLength: 120 },
+              items: { default: [], maxItems: 50, required: ['title', 'description', 'date'], titleMaxLength: 120, descriptionMaxLength: 2000, date: 'valid YYYY-MM-DD calendar date', url: 'optional public HTTPS URL, no credentials/private IP/internal host, max 2000 characters' },
+              order: 'Rendered newest date first. Only include real product updates.',
+            },
+            pulse: { title: { default: 'Pulse', maxLength: 120 }, target: 'Published listing websiteUrl', monitoring: 'Server-managed after publication; no client-provided target or history. Local preview has no samples.' },
+            video: { url: 'YouTube URL, max 500 characters', titleMaxLength: 120, captionMaxLength: 400 },
           },
           null,
           2

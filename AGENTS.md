@@ -5,7 +5,7 @@ Imperative guidance and invariants for AI agents working in `bestagentkits/build
 ## Core Invariants & Boundaries
 
 - **Package Namespace**: `@bestagentkits/build-with-ak` (binaries: `build-with-ak`, `build-with-ak-mcp`).
-- **Contract Provenance**: Upstream base contract pinned at commit `500fe6ef`. Never edit `src/contracts/generated/` manually; use `pnpm sync:contracts` and verify with `pnpm check:drift`.
+- **Contract Provenance**: Upstream base contract pinned at commit `6e548457dba509a39f875cb3fceffb2a5f722a1a`. Never edit `src/contracts/generated/` manually; use `pnpm sync:contracts` and verify with `pnpm check:drift`.
 - **Worker & MCP Edge Safety**: `src/worker.ts` and Cloudflare HTTP transport (`src/mcp/http-services.ts`, `src/auth/`) must remain 100% filesystem-free (`node:fs` prohibited in Worker bundle).
 - **Media Contract**: Image block content must strictly contain finalized `assetId` UUIDs, never raw presigned URLs or local paths.
 - **CAS Atomic Sync**: Draft updates (`push`) must use `PUT /listing` with `expectedDraftRevisionId`. Moderate submissions (`submit`) are frozen and lock revision ID.

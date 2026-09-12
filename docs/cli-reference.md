@@ -57,11 +57,15 @@ Dates are inclusive UTC. `to` defaults to today, `from` defaults to 29 days befo
 ### `validate [--ready]`
 Default: permissive draft check (`authoringDraftSchema`). `--ready`: compile to wire format and run strict submission-readiness (`submissionReadinessSchema`).
 
+Draft saves may omit website/logo or leave the tagline empty. `--ready` still requires submission completeness; a successful draft save is not proof that the listing is ready for moderation.
+
 ### `diff`
 Semantic diff between the local compiled draft and the remote draft (metadata + block changes).
 
 ### `preview [--watch] [--open] [--export <dir>] [--offline]`
 Launch the loopback preview server (`127.0.0.1`, ephemeral port) with EventSource live-reload, or export a standalone static HTML bundle (`--export`, `--offline` enforces a strict CSP).
+
+Activities display owner-authored items newest first. Empty Activities stay empty. Pulse shows an unknown/no-checks state locally and in exports; preview does not probe the website or populate health metrics. A published Pulse block receives checks from the upstream server cron against the published listing's `websiteUrl`.
 
 ### `push [--yes]`
 Atomic CAS push: fetch remote, verify `baseDraftRevisionId`, then single-call `PUT /listing` with `expectedDraftRevisionId`. Exit `5` on conflict.
@@ -70,4 +74,8 @@ Atomic CAS push: fetch remote, verify `baseDraftRevisionId`, then single-call `P
 Frozen submission: `POST /submit` with `{ listingId, expectedDraftRevisionId }`. Requires `--yes` (or `--json`) to confirm.
 
 ### `studio`
-Launch the interactive keyboard-driven Terminal Studio. Keys: arrows/`j`/`k` navigate, `a` add, `d` delete, `x`/`z` move down/up, `s` save, `q` quit.
+Launch the interactive keyboard-driven Terminal Studio. Keys: arrows/`j`/`k` navigate, `a` add, `u` add empty Activities, `h` add Pulse, `d` delete, `x`/`z` move down/up, `s` save, `q` quit. Edit block content in `build-with-ak.json`; the Terminal Studio does not provide an Activities item editor.
+
+## Authoring Activities, Pulse, and video
+
+Edit block content in `build-with-ak.json`, using `studio` to add or arrange blocks, then run `validate --ready`, `preview`, `diff`, and `push` through the existing workflow. These block types have no dedicated CLI subcommands. Use the [block schemas](block-schemas.md) for the content shape: Activities accept real dated entries with optional public HTTPS links; Pulse accepts only a title alongside its type; video accepts a YouTube URL. Local video preview is a safe YouTube link. The CLI has no operation to write Pulse check history, override the monitoring target, or invoke server cron. Submission continues to use `submit` and the existing moderation flow.

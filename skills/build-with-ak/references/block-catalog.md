@@ -1,6 +1,6 @@
 # Block Catalog
 
-All 9 block layouts. Every block is `{ id, order, content }`; `content.type` is the discriminator. Text fields reject markup/script vectors; media fields require a finalized `assetId` UUID (never a raw URL).
+All 12 block layouts. Every block is `{ id, order, content }`; `content.type` is the discriminator. Text fields reject markup/script vectors; image fields require a finalized `assetId` UUID (never a raw URL).
 
 ## hero_banner
 - `title` — text, ≤ 120
@@ -40,9 +40,30 @@ All 9 block layouts. Every block is `{ id, order, content }`; `content.type` is 
 - `note?` — text, ≤ 200 (the destination is the listing's validated `websiteUrl`)
 
 ## claimEvidence
-Attach to any block field carrying a quantitative or superlative claim:
+Supported on `columns.items` and `agentkit_story` for quantitative or superlative claims:
 - `kind` — `url` | `note`
 - `value` — text, ≤ 500
+
+## video
+- `url` — required YouTube URL, ≤ 500; watch, embed, Shorts, and `youtu.be` links with an 11-character video ID are supported.
+- `title?` — text, ≤ 120
+- `caption?` — text, ≤ 400
+- Use the actual product video. No arbitrary embed HTML or video file upload.
+
+## activities
+- `title` — text, ≤ 120; defaults to `Activities`
+- `items` — 0..50 entries; defaults to `[]`
+- Each entry requires `title` (≤ 120), `description` (≤ 2000), and `date` (valid calendar date in `YYYY-MM-DD` format).
+- `items[].url?` — ≤ 2000, public HTTPS without credentials. Local/internal/reserved hostnames and non-public IPs are disallowed. Links are never server fetch targets.
+- Owner-authored product updates only, grounded in repository evidence or developer input. Render newest dates first. Empty timelines stay empty; never generate sample releases or dates.
+- Activity content has no `claimEvidence` field. Do not add unsupported fields or unsupported claims.
+
+## pulse
+- `title` — text, ≤ 120; defaults to `Pulse`
+- Content has only `type: "pulse"` and `title`. No target URL, status, latency, uptime, timestamps, or history fields.
+- Upstream server cron records checks against the published revision's `websiteUrl` when its layout includes Pulse. Preview and draft edits do not run checks.
+- Local preview/export shows unknown/no-checks state with no fabricated history. Published monitoring reflects sampled availability, not a continuous uptime guarantee; stale/missing data is not healthy status.
+- There is no toolkit cron/probe operation.
 
 ## Authoring vs wire
 

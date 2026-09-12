@@ -80,6 +80,12 @@ Point a Streamable-HTTP-capable client at the deployed worker URL and authentica
 
 See [Cloudflare Deployment](cloudflare-deployment.md) and [OAuth Configuration](oauth-configuration.md).
 
+## Browser Studio WebMCP
+
+The optional [webmcp.dev](https://webmcp.dev/) connection in the website's active Studio editor is a separate browser integration. It connects the open editor to a local WebMCP bridge using a fresh connection token. Its tools read and edit that editor's draft through the existing Studio autosave, with no submit or publish operation. Keep the editor open and inspect its save state before considering an edit persisted.
+
+Use `https://bwak.agentkit.best/mcp` with `x-api-key` for the toolkit's hosted Streamable HTTP transport. Do not put a browser WebMCP token in `x-api-key`, use the browser bridge as the HTTP endpoint, or assume its tool names/arguments match `build_with_ak_*` tools. The browser integration requires an active Studio session; hosted HTTP and local toolkit stdio use API credentials independently of that editor.
+
 ## Tools
 
 Core (both transports): `build_with_ak_get_listing`, `_get_analytics`, `_update_listing`, `_submit_listing`, `_validate_listing`, `_list_templates`, `_apply_template`, `_check_slug_availability`, `_list_media_assets`, `_get_blocks`, `_patch_block`, `_reorder_blocks`, `_upload_media_payload`.
@@ -87,6 +93,12 @@ Core (both transports): `build_with_ak_get_listing`, `_get_analytics`, `_update_
 `build_with_ak_get_analytics` is read-only. Optional arguments: `listingId` (owned UUID), `from`, `to` (inclusive UTC `YYYY-MM-DD`). Defaults to the active listing and last 30 days; maximum 366 days, no future end date. Returns listing/period/source/generatedAt, totals, and zero-filled daily rows. Views deduplicate per IP + user agent/day; clicks are redirect requests; `referralConversions` is always `null` in totals and every daily row because tracking is not instrumented. Report unavailable; do not infer conversions, conversion rates, or external product sales. Uses existing credentials on both transports; no workspace or target-extension flag is needed.
 
 stdio-only: `build_with_ak_upload_media_file` (reads a local workspace path).
+
+### Activities, Pulse, and video authoring
+
+The existing listing/block tools handle all 12 block types. Read `build-with-ak://schemas/blocks` and [Block Schemas](block-schemas.md) before authoring. Use `build_with_ak_update_listing` for the full draft with `expectedDraftRevisionId`; use `build_with_ak_patch_block` for existing block edits. These are ordinary draft changes with the same validation, CAS, and moderation boundaries.
+
+Activities contain only real owner-authored updates with valid calendar dates and optional safe public HTTPS links. Pulse content holds only its type and title: never send a URL override, synthetic history, uptime, latency, or status. Monitoring is owned by the upstream server cron and targets the published revision's `websiteUrl`; neither MCP transport exposes a cron/probe operation. Local previews do not contain real Pulse samples. Video uses a real YouTube URL, not an uploaded image UUID.
 
 ## Resources
 
@@ -136,4 +148,4 @@ The production Cloudflare Worker serves standard discovery manifests:
 - **OAuth 2.1 Protected Resource Metadata**: `https://bwak.agentkit.best/.well-known/oauth-protected-resource`
 - **Service Index**: `https://bwak.agentkit.best/`
 
-The OpenAPI analytics operation explicitly targets `https://agentkit.best` (or staging) at `/api/build-with-ak/listing/analytics`. It is an upstream API operation; the Worker serves analytics through `/mcp`, not a REST proxy. The toolkit's pinned authoring contract remains at `500fe6ef`; analytics is an additive extension outside generated schemas.
+The OpenAPI analytics operation explicitly targets `https://agentkit.best` (or staging) at `/api/build-with-ak/listing/analytics`. It is an upstream API operation; the Worker serves analytics through `/mcp`, not a REST proxy. The toolkit's authoring contract is pinned at `6e548457dba509a39f875cb3fceffb2a5f722a1a`; analytics is an additive extension outside generated schemas.

@@ -10,29 +10,58 @@ import {
 import { blocksSchema } from './blocks-schema';
 import { isReservedSlug } from './slug';
 
-const slugSchema = z
+export const slugSchema = z
   .string()
   .min(SLUG_MIN_LENGTH, `Slug must be at least ${SLUG_MIN_LENGTH} characters`)
   .max(SLUG_MAX_LENGTH, `Slug cannot exceed ${SLUG_MAX_LENGTH} characters`)
   .regex(SLUG_REGEX, 'Slug must contain only lowercase letters, numbers, and hyphens (e.g. my-saas-tool)')
   .refine((s) => !isReservedSlug(s), { message: 'This slug is reserved for system routes' });
 
-export const upsertListingDraftSchema = z.object({
+const safeHttpsUrl = z
+  .string()
+  .url('Invalid URL format')
+  .refine((u) => u.startsWith('https://'), 'Only https:// URLs are permitted');
+
+const optionalHttpsUrl = safeHttpsUrl.optional().or(z.literal(''));
+
+export const draftDocumentSchema = z.object({
   name: z.string().trim().min(1, 'Product name is required').max(64, 'Product name cannot exceed 64 characters'),
   slug: slugSchema,
-  tagline: z.string().trim().min(5, 'Tagline is required').max(TAGLINE_MAX_LENGTH, `Tagline cannot exceed ${TAGLINE_MAX_LENGTH} characters`),
-  category: z.enum(CATEGORIES as unknown as [string, ...string[]]),
-  websiteUrl: z.string().url('Invalid website URL').refine((u) => u.startsWith('https://'), 'Only https URLs are permitted'),
-  demoUrl: z.string().url('Invalid demo URL').refine((u) => u.startsWith('https://'), 'Only https URLs are permitted').optional().or(z.literal('')),
-  githubUrl: z.string().url('Invalid GitHub URL').refine((u) => u.startsWith('https://'), 'Only https URLs are permitted').optional().or(z.literal('')),
-  twitterUrl: z.string().url('Invalid Twitter/X URL').refine((u) => u.startsWith('https://'), 'Only https URLs are permitted').optional().or(z.literal('')),
-  logoAssetId: z.string().uuid('Product thumbnail image is required'),
-  coverAssetId: z.string().uuid().optional(),
+  tagline: z.string().trim().max(TAGLINE_MAX_LENGTH, `Tagline cannot exceed ${TAGLINE_MAX_LENGTH} characters`).default(''),
+  category: z.enum(CATEGORIES as unknown as [string, ...string[]]).default('developer_tools'),
+  description: z.string().trim().max(5000, 'Description cannot exceed 5000 characters').optional().or(z.literal('')),
+  websiteUrl: optionalHttpsUrl,
+  demoUrl: optionalHttpsUrl,
+  githubUrl: optionalHttpsUrl,
+  twitterUrl: optionalHttpsUrl,
+  logoAssetId: z.string().uuid().optional().or(z.literal('')),
+  coverAssetId: z.string().uuid().optional().or(z.literal('')),
   blocks: blocksSchema.default([]),
-  expectedDraftRevisionId: z.string().uuid().optional(), // For copy-on-write CAS
+  expectedDraftRevisionId: z.string().uuid().optional(),
 });
 
-export type UpsertListingDraftInput = z.infer<typeof upsertListingDraftSchema>;
+export type DraftDocumentInput = z.infer<typeof draftDocumentSchema>;
+
+export const submissionReadinessSchema = z.object({
+  name: z.string().trim().min(1, 'Product name is required').max(64, 'Product name cannot exceed 64 characters'),
+  slug: slugSchema,
+  tagline: z.string().trim().min(5, 'Tagline is required (min 5 characters)').max(TAGLINE_MAX_LENGTH, `Tagline cannot exceed ${TAGLINE_MAX_LENGTH} characters`),
+  category: z.enum(CATEGORIES as unknown as [string, ...string[]]),
+  description: z.string().trim().max(5000, 'Description cannot exceed 5000 characters').optional().or(z.literal('')),
+  websiteUrl: safeHttpsUrl,
+  demoUrl: optionalHttpsUrl,
+  githubUrl: optionalHttpsUrl,
+  twitterUrl: optionalHttpsUrl,
+  logoAssetId: z.string().uuid('Product thumbnail/logo is required'),
+  coverAssetId: z.string().uuid().optional().or(z.literal('')),
+  blocks: blocksSchema.default([]),
+  expectedDraftRevisionId: z.string().uuid().optional(),
+});
+
+export type SubmissionReadinessInput = z.infer<typeof submissionReadinessSchema>;
+
+export const upsertListingDraftSchema = draftDocumentSchema;
+export type UpsertListingDraftInput = DraftDocumentInput;
 
 export const adminModerateListingSchema = z.object({
   action: z.enum(['approve', 'needs_changes', 'reject', 'publish', 'unpublish', 'archive']),
@@ -41,6 +70,7 @@ export const adminModerateListingSchema = z.object({
   isFeatured: z.boolean().optional(),
   featuredRank: z.number().int().min(0).max(1000).optional(),
   linkRelPolicy: z.enum(LINK_REL_POLICIES as unknown as [string, ...string[]]).optional(),
+  expectedSubmittedRevisionId: z.string().uuid().optional(),
 });
 
 export type AdminModerateListingInput = z.infer<typeof adminModerateListingSchema>;

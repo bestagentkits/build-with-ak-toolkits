@@ -11,10 +11,10 @@ Package: `@bestagentkits/build-with-ak` · Binaries: `build-with-ak`, `build-wit
 Build with AK Toolkits lets developers and AI coding agents publish rich, block-based product showcases to the AgentKit directory — from the terminal, from an interactive TUI studio, or autonomously via MCP.
 
 - **CLI** — `init`, `template`, `slug`, `media`, `pull`, `analytics`, `validate`, `diff`, `preview`, `push`, `submit`, `studio`.
-- **Terminal Studio** — keyboard-driven TUI for metadata, 9 block types, reorder, and review.
+- **Terminal Studio** — keyboard-driven TUI for metadata, 12 block types, reorder, and review.
 - **Local preview** — loopback `127.0.0.1` live-reload server and offline static HTML export.
 - **Dual-transport MCP server** — local `stdio` for Cursor/Claude/OpenCode, and a Cloudflare Workers Streamable HTTP server with OAuth 2.1 (RFC 9728) + `x-api-key`.
-- **9 layout blocks, 5 curated templates** — schema-parity with the `ak-web` backend; media fields require finalized asset UUIDs.
+- **12 layout blocks, 5 curated templates** — includes YouTube video, owner-authored Activities, and server-measured Pulse; image fields require finalized asset UUIDs.
 - **Atomic CAS push & frozen submit** — single-call `PUT /listing` with `expectedDraftRevisionId`, and moderation-frozen `POST /submit`.
 
 ---
@@ -43,6 +43,8 @@ build-with-ak submit --yes
 ```
 
 Every command accepts `--json` for machine-readable `{ ok, data?, error? }` output and standardized exit codes (`0` ok, `2` validation, `3` auth, `4` not found, `5` CAS conflict, `6` network).
+
+Author `video`, `activities`, and `pulse` in `build-with-ak.json` using the existing validate/preview/push workflow. Activities start empty; add only real product updates with valid dates and optional safe public HTTPS links. Pulse accepts only a title alongside its type. Monitoring uses the published listing's `websiteUrl` and upstream server cron; local previews contain no check history or invented health metrics. See [Block Schemas](docs/block-schemas.md) for fields and limits. There are no dedicated Activities, Pulse, or cron CLI commands.
 
 Read your product page analytics without initializing a workspace:
 
@@ -97,6 +99,8 @@ Connect any Streamable HTTP MCP client (Cursor, Claude, OpenCode, Windsurf) to t
   }
 }
 ```
+
+The hosted HTTP MCP endpoint above is separate from the optional [webmcp.dev](https://webmcp.dev/) connection inside the website's active Studio editor. That browser connection edits the open draft through Studio autosave; it does not submit or publish. See [MCP Setup](docs/mcp-setup.md#browser-studio-webmcp) for the boundary.
 
 ### 4. Local stdio MCP Server
 
@@ -154,7 +158,7 @@ pnpm sync:contracts # re-pin wire schemas from ak-web (intentional contract upgr
 pnpm check:drift    # verify committed snapshots match the pinned commit
 ```
 
-Wire schemas are pinned from [`bestagentkits/ak-web`](https://github.com/bestagentkits/ak-web) at commit `500fe6ef` and committed under `src/contracts/generated/` with provenance digests in `src/contracts/provenance.ts`.
+Wire schemas are pinned from [`bestagentkits/ak-web`](https://github.com/bestagentkits/ak-web) at commit `6e548457dba509a39f875cb3fceffb2a5f722a1a` and committed under `src/contracts/generated/` with provenance digests in `src/contracts/provenance.ts`.
 
 ---
 
