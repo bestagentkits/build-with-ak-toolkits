@@ -4,6 +4,16 @@ All notable changes to `@bestagentkits/build-with-ak` will be documented in this
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2026-09-12
+
+### 🚀 Features
+
+- feat(blocks): support activities and pulse authoring (71bb22f)
+
+### 📝 Other Changes
+
+- Merge pull request #11 from bestagentkits/codex/activities-pulse-toolkit (1c51725)
+
 ## [1.0.1] - 2026-09-12
 
 ### 🚀 Features
