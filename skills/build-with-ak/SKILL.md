@@ -1,6 +1,6 @@
 ---
 name: build-with-ak
-description: Create, validate, preview, submit, and retrieve analytics for a product showcase on Build with AK (agentkit.best) using the @bestagentkits/build-with-ak CLI or MCP server. Use when a developer wants to publish or refresh a showcase, upload media, submit for moderation, or analyze their product page views and outbound clicks, or check conversion tracking availability.
+description: Create, validate, preview, submit, and retrieve analytics for a product showcase on Build with AK (agentkit.best) using the @bestagentkits/build-with-ak CLI or MCP server. Use when a developer wants to publish or refresh a showcase, author Activities, add Pulse or YouTube video, upload media, submit for moderation, or analyze their product page views and outbound clicks, or check conversion tracking availability.
 ---
 
 # Build with AK — Product Showcase Authoring
@@ -13,6 +13,7 @@ Publish a rich, block-based product showcase to the **Build with AK** directory.
 2. **Media = finalized UUID.** Every image field stores a finalized `assetId` UUID, never a raw URL or local path. Upload first, then reference the returned UUID.
 3. **Validate before push; approval before submit.** Run readiness validation before pushing. `submit` is frozen and moderated — STOP and get explicit developer approval before calling it.
 4. **CAS is authoritative.** `push` uses `expectedDraftRevisionId`. On a `5` / `STALE_REVISION` conflict, `pull` and reconcile — never blind-overwrite.
+5. **Activities are owner-authored; Pulse is server-measured.** Use real product updates and calendar dates. Keep empty timelines empty. Never invent Pulse samples or supply its monitoring target; only the title is editable. Monitoring targets the published revision's website through upstream server cron, with no toolkit cron operation.
 
 ## Setup
 
@@ -24,6 +25,8 @@ CLI and local stdio still use a customer API key (`ck_live_...`) from the agentk
 export AGENTKIT_API_KEY=ck_live_...
 export AGENTKIT_ENV=staging      # validate on staging before production
 ```
+
+Hosted toolkit MCP uses `https://bwak.agentkit.best/mcp` with browser OAuth or a legacy `x-api-key` header. This is separate from the optional webmcp.dev connection inside the website's active Studio editor. That browser bridge edits the open draft through Studio autosave and cannot submit or publish; its connection token is not an API key. Do not interchange tool names or arguments between the two integrations.
 
 ## Standard workflow (new showcase)
 
@@ -58,13 +61,17 @@ export AGENTKIT_ENV=staging      # validate on staging before production
 
 MCP resource `build-with-ak://remote/analytics` returns the default period. Prompt `review_product_analytics` accepts optional `listingId`, `from`, and `to`.
 
-## Block types (9)
+## Block types (12)
 
-`hero_banner`, `columns` (`two`|`three`|`bento`), `agentkit_story`, `tech_stack`, `screenshot_gallery`, `image_full`, `carousel_gallery`, `maker_quote`, `outbound_cta`. Full field reference: `references/block-catalog.md`.
+`hero_banner`, `columns` (`two`|`three`|`bento`), `agentkit_story`, `tech_stack`, `screenshot_gallery`, `image_full`, `carousel_gallery`, `maker_quote`, `outbound_cta`, `video`, `activities`, `pulse`. Full field reference: `references/block-catalog.md`.
 
 - `maker_quote` REQUIRES real `attribution` and `quoteSource`.
-- Any quantitative/superlative claim in text needs `claimEvidence` (`{ kind: 'url'|'note', value }`).
+- Support quantitative/superlative claims with real evidence. Use `claimEvidence` only where the schema supports it (`columns.items` and `agentkit_story`); do not invent fields on Activities or Pulse.
 - Text fields reject markup/script; media fields require UUID `assetId`.
+- `video` takes a real YouTube URL with optional title/caption; image uploads do not upload videos.
+- `activities` defaults to an empty `items` array. At most 50 real updates, each with title, description, valid `YYYY-MM-DD` date, and optional safe public HTTPS URL; rendering shows newest dates first.
+- `pulse` contains only `type` and title (default `Pulse`). No client-supplied URL, metrics, timestamps, or history. Local preview/export must show unknown/no checks, never sample health data. Do not report a saved draft as monitored or published.
+- Use normal workspace editing or the existing listing/block MCP tools, then validation and CAS save. There are no dedicated Activities/Pulse CLI commands or toolkit cron operations.
 
 ## References
 

@@ -1,4 +1,5 @@
 import type { PreviewBlock } from '../project/compiler';
+import { blockContentSchema, parseYouTubeVideoId } from '../contracts/blocks';
 
 export function escapeHtml(value: unknown): string {
   return String(value ?? '')
@@ -73,6 +74,30 @@ function renderBlockContent(block: PreviewBlock): string {
     case 'outbound_cta': {
       const note = c.note ? `<span class="bwak-cta__note">${escapeHtml(c.note)}</span>` : '';
       return `<div class="bwak-cta"><span class="bwak-cta__label">${escapeHtml(c.label)}</span>${note}</div>`;
+    }
+    case 'activities': {
+      const parsed = blockContentSchema.safeParse(c);
+      if (!parsed.success || parsed.data.type !== 'activities') {
+        return '<p class="bwak-placeholder">Invalid activities content. Run build-with-ak validate.</p>';
+      }
+      const items = [...parsed.data.items].sort((a, b) => b.date.localeCompare(a.date));
+      const rows = items.map((item) => `<li><time datetime="${escapeHtml(item.date)}">${escapeHtml(item.date)}</time>
+        <h3>${item.url ? `<a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.title)}</a>` : escapeHtml(item.title)}</h3>
+        <p>${escapeHtml(item.description)}</p></li>`).join('');
+      return `<div class="bwak-activities"><h2>${escapeHtml(parsed.data.title)}</h2>${rows ? `<ol>${rows}</ol>` : '<p>No activities yet.</p>'}</div>`;
+    }
+    case 'pulse': {
+      return `<div class="bwak-pulse"><h2>${escapeHtml(c.title ?? 'Pulse')}</h2>
+        <p class="bwak-pulse__status">Not monitored in preview</p>
+        <div class="bwak-pulse__line" aria-hidden="true"></div>
+        <p>Health checks begin after publication and target the published product website. No monitoring samples are available in local preview.</p></div>`;
+    }
+    case 'video': {
+      const videoId = typeof c.url === 'string' ? parseYouTubeVideoId(c.url) : null;
+      if (!videoId) return '<p class="bwak-placeholder">Invalid YouTube video URL.</p>';
+      return `<div class="bwak-video"><h2>${escapeHtml(c.title ?? 'Video')}</h2>
+        <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank" rel="noopener noreferrer">Watch on YouTube</a>
+        ${c.caption ? `<p>${escapeHtml(c.caption)}</p>` : ''}</div>`;
     }
     default:
       return `<div class="bwak-unknown">Unsupported block type: ${escapeHtml(block.type)}</div>`;

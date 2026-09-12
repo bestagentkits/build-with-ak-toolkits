@@ -5,8 +5,8 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 describe('Phase 0: Contract Provenance & Drift Gate', () => {
-  it('pins the exact commit SHA 500fe6ef7a7974acf235c84ad0ebb2f28fb5747c', () => {
-    expect(COMMITTED_UPSTREAM_SHA).toBe('500fe6ef7a7974acf235c84ad0ebb2f28fb5747c');
+  it('pins the upstream Activities and Pulse contract revision', () => {
+    expect(COMMITTED_UPSTREAM_SHA).toBe('6e548457dba509a39f875cb3fceffb2a5f722a1a');
   });
 
   it('verifies all generated contract snapshots match their SHA-256 digests', () => {
@@ -19,6 +19,7 @@ describe('Phase 0: Contract Provenance & Drift Gate', () => {
     const required = [
       'constants.ts',
       'blocks-schema.ts',
+      'activity-url.ts',
       'validation.ts',
       'slug.ts',
       'media-contract.ts',

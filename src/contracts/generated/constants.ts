@@ -112,6 +112,9 @@ export const BLOCK_TYPES = [
   'carousel_gallery',
   'maker_quote',
   'outbound_cta',
+  'video',
+  'activities',
+  'pulse',
 ] as const;
 export type BuildWithAkBlockType = (typeof BLOCK_TYPES)[number];
 
@@ -128,10 +131,11 @@ export type BuildWithAkSlugRegistryKind = (typeof SLUG_REGISTRY_KINDS)[number];
 export const RESERVED_DIRECTORY_SLUGS = [
   'admin', 'api', 'auth', 'login', 'logout', 'register', 'signin', 'signup',
   'account', 'dashboard', 'settings', 'billing', 'checkout',
-  'new', 'edit', 'submit', 'create', 'category', 'search', 'filter',
+  'new', 'edit', 'submit', 'create', 'preview', 'category', 'search', 'filter',
   'featured', 'promoted', 'sponsor', 'promo', 'all', 'top', 'popular', 'latest',
   'sitemap', 'rss', 'feed', 'blog', 'docs', 'pricing', 'changelog', 'leaderboard',
   'terms', 'privacy', 'assets', 'static', 'images', 'media', 'cdn',
+  'instructions', 'guide', 'guides', 'tutorial', 'tutorials', 'help',
 ] as const;
 
 // Slug format: lowercase alphanumerics separated by single hyphens.

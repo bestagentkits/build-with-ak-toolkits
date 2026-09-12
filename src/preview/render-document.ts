@@ -31,6 +31,14 @@ body { margin: 0; background: var(--bg); color: var(--text); line-height: 1.6; }
 .bwak-quote cite { display: block; margin-top: 12px; font-size: 14px; color: var(--muted); font-style: normal; }
 .bwak-cta { display: inline-flex; flex-direction: column; padding: 16px 28px; background: var(--accent); color: #fff; border-radius: 12px; font-weight: 600; }
 .bwak-cta__note { font-size: 13px; opacity: 0.85; font-weight: 400; }
+.bwak-activities ol { list-style: none; padding: 0; }
+.bwak-activities li { border-left: 2px solid var(--accent); padding: 0 0 20px 20px; }
+.bwak-activities h3 { margin: 4px 0; }
+.bwak-activities p { white-space: pre-wrap; overflow-wrap: anywhere; }
+.bwak-activities time, .bwak-pulse p { color: var(--muted); }
+.bwak-activities a, .bwak-video a { color: var(--accent); }
+.bwak-pulse__status { font-family: ui-monospace, monospace; }
+.bwak-pulse__line { height: 60px; background: linear-gradient(transparent 49%, var(--muted) 49%, var(--muted) 51%, transparent 51%); opacity: 0.4; }
 figcaption { color: var(--muted); font-size: 13px; margin-top: 6px; }
 `;
 

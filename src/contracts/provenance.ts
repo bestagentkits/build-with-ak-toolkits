@@ -3,15 +3,16 @@
  * Pinned Base Contract Provenance Metadata
  */
 
-export const COMMITTED_UPSTREAM_SHA = '500fe6ef7a7974acf235c84ad0ebb2f28fb5747c';
+export const COMMITTED_UPSTREAM_SHA = '6e548457dba509a39f875cb3fceffb2a5f722a1a';
 export const UPSTREAM_REPO = 'bestagentkits/ak-web';
-export const SNAPSHOT_TIMESTAMP = '2026-09-02T07:42:23.116Z';
+export const SNAPSHOT_TIMESTAMP = '2026-09-12T09:36:01.505Z';
 
 export const SCHEMA_DIGESTS = {
-  "constants.ts": "42cc31d09f3cb34d2b083d51223bba6bd3c73b39599043670fc03df6811aef87",
-  "blocks-schema.ts": "ad9ba89a2dd2dc5bac56b0932b99463ac17339f0cc1a9a26622b8dad0c177c68",
-  "validation.ts": "70ebaad19113f9ce58491f534f03f358d93b15efe7e930af4a9bc4b479e8b1ef",
-  "slug.ts": "2a31722dc8d9024b611c32783139c554699c95fb96e42a9094a7f618b2d4aa7f",
+  "constants.ts": "6d3ab5a51bc9a95a2f9d840199028367c97bcac6ee5703105e3d8b282a5b7fa6",
+  "blocks-schema.ts": "42ebf93816caa5b22f83b6828a62084fa5b9c99d44daa2ea4e6d50eb87ea05a1",
+  "activity-url.ts": "82c2df3b3c9e19fb845880542f98b23a34ac96d49d09f2734a7ef01f4aa91e4d",
+  "validation.ts": "7165cfa45b15a584af3f13e57318aa0006b105f0f4bb7738b0a8463fb623c680",
+  "slug.ts": "e0737935acdca5876ebf5428bff6928b8ea4668c5f1e5147216581293ad46bc8",
   "media-contract.ts": "c6184a96dfdd064a6edd52e0d463b7a04ad2b8eb32959b36ba428cb184153f22"
 } as const;
 

@@ -39,6 +39,7 @@ Keys:
   ↑/↓ or j/k  navigate blocks     a  add block        d  delete block
   x/z         move down/up        v  validate         p  print preview URL hint
   s           save workspace      q  quit
+  u           add Activities      h  add Pulse
 `;
 
 export interface StudioAppOptions {
@@ -103,6 +104,11 @@ export function runStudio(ctx: CliContext, options: StudioAppOptions = {}): Prom
     else if (name === 'down' || name === 'j') cursor = Math.min(Math.max(0, state.blocks.length - 1), cursor + 1);
     else if (name === 'a') {
       state.addBlock({ type: 'outbound_cta', label: 'New CTA' });
+      cursor = state.blocks.length - 1;
+    } else if (name === 'u' || name === 'h') {
+      state.addBlock(name === 'u'
+        ? { type: 'activities', title: 'Activities', items: [] }
+        : { type: 'pulse', title: 'Pulse' });
       cursor = state.blocks.length - 1;
     } else if (name === 'd') {
       const block = state.blocks[cursor];
