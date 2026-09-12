@@ -24,6 +24,23 @@ function userText(text: string): McpPromptMessage {
 export function createPrompts(): McpPromptDefinition[] {
   return [
     {
+      name: 'review_product_analytics',
+      title: 'Review Product Analytics',
+      description: 'Retrieve and explain owner product page analytics using first-party evidence.',
+      arguments: [
+        { name: 'listingId', description: 'Optional owned listing UUID', required: false },
+        { name: 'from', description: 'Inclusive UTC start date, YYYY-MM-DD', required: false },
+        { name: 'to', description: 'Inclusive UTC end date, YYYY-MM-DD', required: false },
+      ],
+      build: (args) => [userText(
+        `Call build_with_ak_get_analytics with ${JSON.stringify({ listingId: args.listingId, from: args.from, to: args.to })}. ` +
+        'Report the returned listing, UTC period, source, generatedAt, totals, and daily trends. The default is 30 days; the maximum is 366 days. ' +
+        'Views are deduplicated per IP + user agent per day, not unique people across the period. Outbound clicks are redirect requests, not unique visitors. ' +
+        'Referral conversions are null in totals and every daily row because conversion tracking is not instrumented. Report unavailable, never zero; do not infer conversions or conversion rates. These metrics are not sales on the product owner\'s external website. ' +
+        'Never invent missing data or claim external revenue. Report auth, ownership, date-range, and rate-limit failures clearly.'
+      )],
+    },
+    {
       name: 'draft_product_showcase',
       title: 'Draft Product Showcase',
       description: 'Interview the developer and seed a template into a build-with-ak draft.',

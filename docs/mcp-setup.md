@@ -82,17 +82,19 @@ See [Cloudflare Deployment](cloudflare-deployment.md) and [OAuth Configuration](
 
 ## Tools
 
-Core (both transports): `build_with_ak_get_listing`, `_update_listing`, `_submit_listing`, `_validate_listing`, `_list_templates`, `_apply_template`, `_check_slug_availability`, `_list_media_assets`, `_get_blocks`, `_patch_block`, `_reorder_blocks`, `_upload_media_payload`.
+Core (both transports): `build_with_ak_get_listing`, `_get_analytics`, `_update_listing`, `_submit_listing`, `_validate_listing`, `_list_templates`, `_apply_template`, `_check_slug_availability`, `_list_media_assets`, `_get_blocks`, `_patch_block`, `_reorder_blocks`, `_upload_media_payload`.
+
+`build_with_ak_get_analytics` is read-only. Optional arguments: `listingId` (owned UUID), `from`, `to` (inclusive UTC `YYYY-MM-DD`). Defaults to the active listing and last 30 days; maximum 366 days, no future end date. Returns listing/period/source/generatedAt, totals, and zero-filled daily rows. Views deduplicate per IP + user agent/day; clicks are redirect requests; `referralConversions` is always `null` in totals and every daily row because tracking is not instrumented. Report unavailable; do not infer conversions, conversion rates, or external product sales. Uses existing credentials on both transports; no workspace or target-extension flag is needed.
 
 stdio-only: `build_with_ak_upload_media_file` (reads a local workspace path).
 
 ## Resources
 
-`build-with-ak://schemas/listing`, `://schemas/blocks`, `://templates/catalog`, `://remote/listing`, and (stdio) `://workspace/draft`.
+`build-with-ak://schemas/listing`, `://schemas/blocks`, `://templates/catalog`, `://remote/listing`, `://remote/analytics` (active listing, last 30 UTC days), and (stdio) `://workspace/draft`.
 
 ## Prompts
 
-`draft_product_showcase`, `curate_layout_blocks`, `prepare_submission`.
+`draft_product_showcase`, `curate_layout_blocks`, `prepare_submission`, `review_product_analytics` (optional `listingId`, `from`, `to`).
 
 ---
 
@@ -133,3 +135,5 @@ The production Cloudflare Worker serves standard discovery manifests:
 - **OpenAPI 3.1.0 Specification**: `https://bwak.agentkit.best/openapi.json`
 - **OAuth 2.1 Protected Resource Metadata**: `https://bwak.agentkit.best/.well-known/oauth-protected-resource`
 - **Service Index**: `https://bwak.agentkit.best/`
+
+The OpenAPI analytics operation explicitly targets `https://agentkit.best` (or staging) at `/api/build-with-ak/listing/analytics`. It is an upstream API operation; the Worker serves analytics through `/mcp`, not a REST proxy. The toolkit's pinned authoring contract remains at `500fe6ef`; analytics is an additive extension outside generated schemas.

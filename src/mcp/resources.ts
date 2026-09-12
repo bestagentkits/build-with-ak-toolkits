@@ -24,6 +24,14 @@ export interface McpResourceDefinition {
 export function createResources(services: McpServices): McpResourceDefinition[] {
   const resources: McpResourceDefinition[] = [
     {
+      uri: 'build-with-ak://remote/analytics',
+      name: 'remote-analytics',
+      title: 'Product Page Analytics',
+      description: 'Authenticated active listing analytics for the last 30 UTC days. Use build_with_ak_get_analytics for other dates or an owned listing UUID.',
+      mimeType: 'application/json',
+      load: async () => JSON.stringify(await services.getClient().getAnalytics(), null, 2),
+    },
+    {
       uri: 'build-with-ak://schemas/listing',
       name: 'listing-schema',
       title: 'Listing Metadata Schema',

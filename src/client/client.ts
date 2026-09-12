@@ -1,5 +1,7 @@
 import { Transport, type FetchLike, type RequestOptions } from './transport';
-import { BuildWithAkCapabilityError } from './errors';
+import { BuildWithAkCapabilityError, BuildWithAkValidationError } from './errors';
+import { analyticsQuerySchema, type AnalyticsQuery, type ListingAnalyticsResponse } from '../contracts/analytics';
+export type { AnalyticsQuery, AnalyticsMetrics, ListingAnalyticsResponse } from '../contracts/analytics';
 import type {
   BuildWithAkBlock,
   BuildWithAkInsertBlockInput,
@@ -190,6 +192,17 @@ export class BuildWithAkClient {
       path: '/media/finalize',
       body: { stagingKey, kind },
       options,
+    });
+  }
+
+  /** Owner analytics extension; dates and range defaults are resolved by the server in UTC. */
+  async getAnalytics(params: AnalyticsQuery = {}, options?: RequestOptions): Promise<ListingAnalyticsResponse> {
+    const parsed = analyticsQuerySchema.safeParse(params);
+    if (!parsed.success) {
+      throw new BuildWithAkValidationError('Invalid analytics query.', parsed.error.issues);
+    }
+    return this.transport.request<ListingAnalyticsResponse>({
+      method: 'GET', path: '/listing/analytics', query: parsed.data, options,
     });
   }
 

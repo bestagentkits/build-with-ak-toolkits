@@ -10,7 +10,7 @@ Package: `@bestagentkits/build-with-ak` · Binaries: `build-with-ak`, `build-wit
 
 Build with AK Toolkits lets developers and AI coding agents publish rich, block-based product showcases to the AgentKit directory — from the terminal, from an interactive TUI studio, or autonomously via MCP.
 
-- **CLI** — `init`, `template`, `slug`, `media`, `pull`, `validate`, `diff`, `preview`, `push`, `submit`, `studio`.
+- **CLI** — `init`, `template`, `slug`, `media`, `pull`, `analytics`, `validate`, `diff`, `preview`, `push`, `submit`, `studio`.
 - **Terminal Studio** — keyboard-driven TUI for metadata, 9 block types, reorder, and review.
 - **Local preview** — loopback `127.0.0.1` live-reload server and offline static HTML export.
 - **Dual-transport MCP server** — local `stdio` for Cursor/Claude/OpenCode, and a Cloudflare Workers Streamable HTTP server with OAuth 2.1 (RFC 9728) + `x-api-key`.
@@ -43,6 +43,15 @@ build-with-ak submit --yes
 ```
 
 Every command accepts `--json` for machine-readable `{ ok, data?, error? }` output and standardized exit codes (`0` ok, `2` validation, `3` auth, `4` not found, `5` CAS conflict, `6` network).
+
+Read your product page analytics without initializing a workspace:
+
+```bash
+build-with-ak analytics --json
+build-with-ak analytics --from 2026-08-01 --to 2026-08-31 --listing-id <owned-listing-uuid> --json
+```
+
+Uses the existing API key (or global `--api-key`). Returns first-party totals and zero-filled daily UTC counts; default last 30 days, maximum 366. Views deduplicate IP + user agent per listing/day; outbound clicks count redirect requests; `referralConversions` is always `null` in totals and daily rows because conversion tracking is not instrumented. Report conversions as unavailable; do not infer conversions, conversion rates, or external product sales. MCP agents can call `build_with_ak_get_analytics` on either transport. Requires an upstream backend with `GET /api/build-with-ak/listing/analytics`; no target-extension flag is needed.
 
 ---
 

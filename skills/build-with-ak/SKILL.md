@@ -1,6 +1,6 @@
 ---
 name: build-with-ak
-description: Create, validate, preview, and submit a product showcase on the Build with AK directory (agentkit.best) using the @bestagentkits/build-with-ak CLI or MCP server. Use when a developer wants to publish or refresh their product's showcase page, draft layout blocks, upload media, or submit a listing for moderation.
+description: Create, validate, preview, submit, and retrieve analytics for a product showcase on Build with AK (agentkit.best) using the @bestagentkits/build-with-ak CLI or MCP server. Use when a developer wants to publish or refresh a showcase, upload media, submit for moderation, or analyze their product page views and outbound clicks, or check conversion tracking availability.
 ---
 
 # Build with AK — Product Showcase Authoring
@@ -45,6 +45,16 @@ export AGENTKIT_ENV=staging      # validate on staging before production
 2. `build-with-ak diff` — review local-vs-remote changes.
 3. Edit blocks (CLI, `studio`, or `build_with_ak_patch_block` / `build_with_ak_reorder_blocks`).
 4. `validate --ready` → `push` → (approval) → `submit`.
+
+## Product page analytics (read-only)
+
+1. Use existing credentials to run `build-with-ak analytics --json` or call `build_with_ak_get_analytics` with `{}`. No `init`, `pull`, workspace, or target-extension flag is needed. CLI global `--api-key` works without an environment key.
+2. For a requested period, pass `--from YYYY-MM-DD --to YYYY-MM-DD` (MCP: `from`, `to`). Dates are inclusive UTC; default `to` is today and `from` is 29 days earlier. Maximum 366 days; no future `to`.
+3. Omit listing ID to select the active non-rejected/non-archived listing, or pass `--listing-id <owned-uuid>` (MCP: `listingId`) for an owned historical listing.
+4. Report returned listing, period, source, generatedAt, totals, and daily trends from real data. Views deduplicate per listing/IP + user agent/day, not unique people across days. Outbound clicks count redirect requests. Referral conversions are always `null` in totals and every daily row because conversion tracking is not instrumented. Report unavailable, never zero. Do not infer conversions, conversion rates, or external product sales.
+5. A 404 means no matching owned listing, including cross-owner IDs; never infer that another owner's listing exists. Report validation, authentication, and rate-limit failures clearly. Do not fabricate analytics or external revenue.
+
+MCP resource `build-with-ak://remote/analytics` returns the default period. Prompt `review_product_analytics` accepts optional `listingId`, `from`, and `to`.
 
 ## Block types (9)
 

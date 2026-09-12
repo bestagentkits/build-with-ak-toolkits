@@ -11,6 +11,7 @@ import {
   hasRequiredScope,
 } from './auth/oauth-worker';
 import { validateApiKeyHeader, readApiKeyHeader } from './auth/api-key-worker';
+import { analyticsOpenApiOperation, analyticsOpenApiSchemas } from './contracts/analytics-openapi';
 
 export interface WorkerEnv {
   AGENTKIT_ENV?: string;
@@ -46,8 +47,8 @@ function buildAiPluginManifest(env: WorkerEnv, url: URL) {
     schema_version: 'v1',
     name_for_human: 'Build with AK',
     name_for_model: 'build_with_ak',
-    description_for_human: 'Create, customize, and submit product showcases to the Build with AK Customer Directory on agentkit.best.',
-    description_for_model: 'Official plugin and action interface for authoring, validating, previewing, and managing product showcase listings and layout blocks on Build with AK (agentkit.best).',
+    description_for_human: 'Create, customize, submit, and review analytics for your product showcases on Build with AK (agentkit.best).',
+    description_for_model: 'Author and manage Build with AK showcases, or call build_with_ak_get_analytics for owner-only product page views and outbound redirect requests. Referral conversions are null because tracking is not instrumented; report unavailable and do not infer conversions, conversion rates, or external product sales.',
     auth: {
       type: 'oauth',
       client_url: `${authServer}/oauth/authorize`,
@@ -90,6 +91,7 @@ export function buildOpenApiSpec(origin: string) {
       { OAuth2: ['build-with-ak:read', 'build-with-ak:write'] },
     ],
     paths: {
+      '/api/build-with-ak/listing/analytics': analyticsOpenApiOperation,
       '/': {
         get: {
           summary: 'Service Index & Discovery',
@@ -258,6 +260,7 @@ export function buildOpenApiSpec(origin: string) {
         },
       },
       schemas: {
+        ...analyticsOpenApiSchemas,
         ServiceIndex: {
           type: 'object',
           properties: {
