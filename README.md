@@ -82,21 +82,20 @@ npx skills use bestagentkits/build-with-ak-toolkits --skill build-with-ak
 
 ### 3. Hosted Remote MCP Server (Streamable HTTP)
 
-Connect any Streamable HTTP MCP client (Cursor, Claude, OpenCode, Windsurf) to the production edge endpoint:
+Connect an OAuth-capable Streamable HTTP MCP client to this URL. Its normal browser sign-in and consent flow grants access to your own account; analytics starts with `build-with-ak:read`, and write actions request additional consent:
 
 ```json
 {
   "mcpServers": {
     "build-with-ak": {
       "type": "http",
-      "url": "https://bwak.agentkit.best/mcp",
-      "headers": {
-        "x-api-key": "ck_live_..."
-      }
+      "url": "https://bwak.agentkit.best/mcp"
     }
   }
 }
 ```
+
+For clients without browser OAuth, an optional `x-api-key` header remains supported. CLI and local stdio continue using your customer API key.
 
 ### 4. Local stdio MCP Server
 

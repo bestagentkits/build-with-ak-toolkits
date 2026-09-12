@@ -31,7 +31,7 @@ describe('Phase 5: Cloudflare Worker Streamable HTTP & Dual Auth', () => {
     const res = await worker.fetch(new Request('https://worker.example/.well-known/oauth-protected-resource'), env);
     expect(res.status).toBe(200);
     const body = (await res.json()) as { resource: string; authorization_servers: string[]; scopes_supported: string[] };
-    expect(body.resource).toBe('https://worker.example');
+    expect(body.resource).toBe('https://worker.example/mcp');
     expect(body.authorization_servers).toContain('https://agentkit.best');
     expect(body.scopes_supported).toContain('build-with-ak:read');
   });

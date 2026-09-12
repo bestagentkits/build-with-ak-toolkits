@@ -38,6 +38,7 @@ export interface BearerValidationResult {
   valid: boolean;
   subject?: string;
   scopes?: string[];
+  expiresAt?: number;
   reason?: string;
 }
 
@@ -60,12 +61,21 @@ function getJwks(jwksUrl: string): ReturnType<typeof createRemoteJWKSet> {
 export async function verifyBearerToken(token: string, config: BearerValidationConfig): Promise<BearerValidationResult> {
   try {
     const jwks = getJwks(config.jwksUrl);
-    const { payload } = await jwtVerify(token, jwks, {
+    const { payload, protectedHeader } = await jwtVerify(token, jwks, {
       issuer: config.issuer,
       audience: config.audience,
+      algorithms: ['ES256'],
+      typ: 'at+jwt',
+      requiredClaims: ['iss', 'aud', 'sub', 'exp', 'iat', 'jti', 'client_id', 'grant_id', 'scope'],
     });
-    const scopeClaim = typeof payload.scope === 'string' ? payload.scope.split(' ') : [];
-    return { valid: true, subject: payload.sub, scopes: scopeClaim };
+    const scopes = parseScopes(payload.scope);
+    if (protectedHeader.typ !== 'at+jwt' || payload.aud !== config.audience || !scopes ||
+        ['sub', 'jti', 'client_id', 'grant_id'].some((key) => typeof payload[key] !== 'string' || !payload[key]!.trim()) ||
+        !Number.isInteger(payload.iat) || payload.iat! > Math.floor(Date.now() / 1000) ||
+        !Number.isInteger(payload.exp) || payload.exp! <= payload.iat!) {
+      return { valid: false, reason: 'Invalid access token claims' };
+    }
+    return { valid: true, subject: payload.sub, scopes, expiresAt: payload.exp };
   } catch (error) {
     return { valid: false, reason: error instanceof Error ? error.message : 'Token verification failed' };
   }
@@ -78,11 +88,14 @@ export function extractBearerToken(authorizationHeader: string | null): string |
 }
 
 /**
- * Scope enforcement for a validated Bearer token. A token with no scope claim
- * is accepted (some authorization servers omit it); a token that carries scopes
- * must include at least one of the required scopes.
+ * At least one explicitly required scope must be granted. Missing scopes fail closed.
  */
 export function hasRequiredScope(tokenScopes: string[] | undefined, requiredScopes: string[]): boolean {
-  if (!tokenScopes || tokenScopes.length === 0) return true;
-  return tokenScopes.some((s) => requiredScopes.includes(s));
+  return Boolean(tokenScopes?.some((s) => requiredScopes.includes(s)));
+}
+
+export function parseScopes(value: unknown): string[] | undefined {
+  if (typeof value !== 'string' || !value || value.trim() !== value) return undefined;
+  const scopes = value.split(' ');
+  return scopes.every((scope) => DEFAULT_SCOPES.includes(scope)) ? scopes : undefined;
 }

@@ -64,19 +64,20 @@ Set `AGENTKIT_TARGET_EXTENSIONS=1` to enable the target-contract tools (`check_s
 
 ## Remote (Cloudflare Streamable HTTP)
 
-Point a Streamable-HTTP-capable client at the deployed worker URL and authenticate with `x-api-key` or an OAuth 2.1 Bearer token.
+Add the URL to an OAuth-capable Streamable HTTP client. Follow the normal browser sign-in and consent flow; no API key is needed for hosted OAuth. Analytics requests read access by default. Writes require separate `build-with-ak:write` consent.
 
 ```json
 {
   "mcpServers": {
     "build-with-ak-remote": {
       "type": "http",
-      "url": "https://bwak.agentkit.best/mcp",
-      "headers": { "x-api-key": "ck_live_..." }
+      "url": "https://bwak.agentkit.best/mcp"
     }
   }
 }
 ```
+
+For legacy clients, add `"headers": { "x-api-key": "ck_live_..." }`. Do not combine API-key and Bearer headers. Local stdio keeps API-key configuration.
 
 See [Cloudflare Deployment](cloudflare-deployment.md) and [OAuth Configuration](oauth-configuration.md).
 

@@ -28,12 +28,12 @@ The repo ships a `wrangler.jsonc`:
     "OAUTH_ISSUER": "https://agentkit.best",
     "OAUTH_JWKS_URL": "https://agentkit.best/.well-known/jwks.json",
     "OAUTH_AUTH_SERVERS": "https://agentkit.best",
-    "WORKER_RESOURCE_URL": "https://bwak.agentkit.best"
+    "WORKER_RESOURCE_URL": "https://bwak.agentkit.best/mcp"
   }
 }
 ```
 
-Set `WORKER_RESOURCE_URL` in `vars` to the worker's public URL once known (used as the OAuth audience and in the metadata `resource`). If omitted, the request origin is used.
+Set `WORKER_RESOURCE_URL` to the canonical MCP URL including `/mcp`. Metadata and JWT audience use this resource; discovery URLs remain on the origin.
 
 ## Response mode
 
@@ -41,15 +41,15 @@ By default the worker streams responses as `text/event-stream`. Set the var `MCP
 
 ## Secrets
 
-Never put secrets in `vars`. For single-tenant self-deploy (OAuth users share the worker's own service key):
+Never put secrets in `vars`. Provision the confidential client `build-with-ak-mcp` in the AgentKit authorization server and install the matching secret:
 
 ```bash
-wrangler secret put AGENTKIT_API_KEY   # ck_live_... service key
+wrangler secret put OAUTH_CLIENT_SECRET
 ```
 
-Multi-tenant deployments omit the service key and require each caller to send their own `x-api-key`.
+The Worker exchanges the caller's MCP access token for a per-user API token on every request. It never uses `AGENTKIT_API_KEY` or `AGENTKIT_ADMIN_API_KEY` for OAuth. Existing customer `x-api-key` callers remain supported without an exchange secret.
 
-`AGENTKIT_ADMIN_API_KEY` is never used by or bound to the worker.
+Deploy the website's authorization server, JWKS and delegated API validation first, then provision the matching confidential-client secret and deploy this Worker. A missing secret or unavailable exchange fails closed. See [OAuth configuration](oauth-configuration.md) for token and scope contracts.
 
 ## Deploy
 

@@ -44,10 +44,7 @@
     },
     "build-with-ak-remote": {
       "type": "http",
-      "url": "https://bwak.agentkit.best/mcp",
-      "headers": {
-        "x-api-key": "${user_config.AGENTKIT_API_KEY}"
-      }
+      "url": "https://bwak.agentkit.best/mcp"
     }
   },
   "skills": [

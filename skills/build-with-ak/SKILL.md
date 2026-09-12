@@ -16,7 +16,9 @@ Publish a rich, block-based product showcase to the **Build with AK** directory.
 
 ## Setup
 
-The developer needs a customer API key (`ck_live_...`) from the agentkit.best Customer Dashboard.
+For hosted MCP, configure only `https://bwak.agentkit.best/mcp` in an OAuth-capable client and complete its normal browser sign-in and consent flow. Analytics needs `build-with-ak:read`; request `build-with-ak:write` only when performing writes. Never ask the user to paste browser cookies, access tokens, or the Worker client secret.
+
+CLI and local stdio still use a customer API key (`ck_live_...`) from the agentkit.best Customer Dashboard. Legacy hosted clients may send that key as `x-api-key`.
 
 ```bash
 export AGENTKIT_API_KEY=ck_live_...
