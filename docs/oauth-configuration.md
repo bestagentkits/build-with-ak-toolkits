@@ -15,13 +15,13 @@ Both `/.well-known/oauth-protected-resource` and `/.well-known/oauth-protected-r
 }
 ```
 
-Unauthenticated requests receive HTTP401 and a Bearer `WWW-Authenticate` challenge with `resource_metadata="https://bwak.agentkit.best/.well-known/oauth-protected-resource/mcp"` and `scope="build-with-ak:read"`. Clients discover AgentKit's authorization server, then use Authorization Code + PKCE (S256) through the browser. The canonical resource includes `/mcp`; origin-only tokens are rejected. Do not copy access tokens or browser session cookies into agent prompts.
+Unauthenticated requests receive HTTP401 and a Bearer `WWW-Authenticate` challenge (without an `error` code, per RFC 6750 §3.1; rejected tokens add `error="invalid_token"`) with `resource_metadata="https://bwak.agentkit.best/.well-known/oauth-protected-resource/mcp"` and `scope="build-with-ak:read"`. Clients discover AgentKit's authorization server, then use Authorization Code + PKCE (S256) through the browser. The canonical resource includes `/mcp`; origin-only tokens are rejected. Do not copy access tokens or browser session cookies into agent prompts.
 
 ## Access-token verification
 
 The Worker verifies the signature using `https://agentkit.best/.well-known/jwks.json`, permits only ES256 with `typ=at+jwt`, and requires `iss`, `aud`, `sub`, `exp`, `iat`, `jti`, `client_id`, `grant_id`, and `scope`.
 
-Issuer is exactly `https://agentkit.best` and audience exactly `https://bwak.agentkit.best/mcp`. Identity claims must be nonempty strings; timestamps must be valid, unexpired and not future-issued. Scope is a nonempty space-delimited string containing only `build-with-ak:read` and/or `build-with-ak:write`. Missing/invalid claims fail with401. JWKS public keys are cached; user tokens and exchanges are never shared or cached.
+Issuer is exactly `https://agentkit.best` and audience exactly `https://bwak.agentkit.best/mcp`. Identity claims must be nonempty strings; timestamps must be valid, unexpired and not issued more than30 seconds in the future (tolerance for issuer/edge clock skew on freshly minted tokens). Scope is a nonempty space-delimited string containing only `build-with-ak:read` and/or `build-with-ak:write`. Missing/invalid claims fail with401. JWKS public keys are cached; user tokens and exchanges are never shared or cached.
 
 ## Per-user API delegation
 
@@ -37,7 +37,7 @@ After token and operation-scope verification, the Worker calls `POST https://age
 
 The server returns a distinct Bearer `access_token`, positive `expires_in` no greater than60 seconds, and granted `scope`. Scope cannot expand beyond the source token. No refresh token is accepted or used. Only this delegated token is sent to the API as `Authorization: Bearer`; the original MCP token is never passed to API endpoints. Delegated tokens are request-local. The API independently verifies its distinct audience, active grant, user and eligibility on each request.
 
-Missing exchange configuration, network failures or invalid responses fail closed. Revoked/invalid grants return401; insufficient scope returns403 with a scope challenge. Upstream error details and credentials are not exposed. The exchange refuses redirects and times out after10 seconds.
+Missing exchange configuration, network failures or invalid responses fail closed. Each failure logs one `oauth_token_exchange_failed` JSON line (reason, upstream HTTP status and registered OAuth error code only; never tokens, secrets or upstream descriptions) to Workers observability. Revoked/invalid grants return401; insufficient scope returns403 with a scope challenge. Upstream error details and credentials are not exposed. The exchange does not follow redirects (it uses `redirect: "manual"` and fails on any 3xx, since Workers reject `redirect: "error"`) and times out after10 seconds.
 
 `AGENTKIT_API_KEY` is ignored by OAuth, including old single-tenant deployments. There is no shared-identity fallback. Customer `x-api-key` is a separate legacy lane; supplying both an API key and Authorization header is rejected.
 
@@ -53,3 +53,13 @@ Read access covers listing/blocks/analytics reads, media listing, slug checks, t
 4. Verify URL-only browser OAuth, read-only analytics and separate write consent; check revocation, wrong audiences and cross-user isolation. API-key requests remain available during rollout.
 
 Removing the exchange secret disables OAuth delegation without changing customer API-key behavior. Rolling back to the previous Worker would restore the old OAuth shared-key implementation, so do not roll back with a service `AGENTKIT_API_KEY` bound.
+
+## Troubleshooting
+
+A client that reports "authorized, but returned an error when connecting" received a 5xx from `/mcp` after a successful browser login. Run `wrangler tail build-with-ak-mcp --format json` and reconnect:
+
+- `upstreamError":"invalid_client"`: the Worker `OAUTH_CLIENT_SECRET` no longer matches the website `MCP_OAUTH_WORKER_SECRET` (Kubernetes Secret `claudekit-web-mcp-oauth` in `dxup/claudekit-prod`). Pipe the website value into `wrangler secret put OAUTH_CLIENT_SECRET` without printing it.
+- `reason":"network_error"`: `fetch` threw before any response (`exception` names the error type); `reason":"redirected"`: the token endpoint answered 3xx.
+- `upstreamError":"server_error"`: inspect the website logs for the token endpoint.
+
+Clients on MCP `2026-07-28` first send `server/discover`; this SDK1.x server answers HTTP400 for that version and the client falls back to `initialize` with a 2025-era version, which is expected.
