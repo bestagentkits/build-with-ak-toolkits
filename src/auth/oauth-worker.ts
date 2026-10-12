@@ -23,7 +23,10 @@ export function buildProtectedResourceMetadata(config: {
   };
 }
 
-/** WWW-Authenticate challenge pointing clients at the resource metadata (RFC 9728 §5.1). */
+/**
+ * WWW-Authenticate challenge pointing clients at the resource metadata (RFC 9728 §5.1).
+ * Callers append `error` only when credentials were presented (RFC 6750 §3.1).
+ */
 export function buildWwwAuthenticate(resourceMetadataUrl: string): string {
   return `Bearer resource_metadata="${resourceMetadataUrl}"`;
 }
@@ -41,6 +44,14 @@ export interface BearerValidationResult {
   expiresAt?: number;
   reason?: string;
 }
+
+/**
+ * Tolerated clock difference between the authorization server and this Worker.
+ * Clients call the MCP endpoint immediately after the token is minted, so an
+ * issuer clock slightly ahead of the edge must not make a fresh token look
+ * future-issued.
+ */
+export const CLOCK_SKEW_SECONDS = 30;
 
 // A remote JWKS is cached per URL to avoid refetching on every request.
 const jwksCache: Record<string, ReturnType<typeof createRemoteJWKSet>> = {};
@@ -66,12 +77,13 @@ export async function verifyBearerToken(token: string, config: BearerValidationC
       audience: config.audience,
       algorithms: ['ES256'],
       typ: 'at+jwt',
+      clockTolerance: CLOCK_SKEW_SECONDS,
       requiredClaims: ['iss', 'aud', 'sub', 'exp', 'iat', 'jti', 'client_id', 'grant_id', 'scope'],
     });
     const scopes = parseScopes(payload.scope);
     if (protectedHeader.typ !== 'at+jwt' || payload.aud !== config.audience || !scopes ||
         ['sub', 'jti', 'client_id', 'grant_id'].some((key) => typeof payload[key] !== 'string' || !payload[key]!.trim()) ||
-        !Number.isInteger(payload.iat) || payload.iat! > Math.floor(Date.now() / 1000) ||
+        !Number.isInteger(payload.iat) || payload.iat! > Math.floor(Date.now() / 1000) + CLOCK_SKEW_SECONDS ||
         !Number.isInteger(payload.exp) || payload.exp! <= payload.iat!) {
       return { valid: false, reason: 'Invalid access token claims' };
     }

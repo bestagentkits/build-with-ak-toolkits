@@ -143,7 +143,7 @@ describe('Per-user Worker OAuth delegation', () => {
     expect(Object.fromEntries(fields)).toEqual({ grant_type: 'urn:ietf:params:oauth:grant-type:token-exchange',
       client_id: 'build-with-ak-mcp', client_secret: env.OAUTH_CLIENT_SECRET, subject_token: subject,
       subject_token_type: 'urn:ietf:params:oauth:token-type:access_token', requested_token_type: 'urn:ietf:params:oauth:token-type:access_token', resource: 'https://agentkit.best/api/build-with-ak' });
-    expect(exchangeInit.redirect).toBe('error');
+    expect(exchangeInit.redirect).toBe('manual');
     expect(String(upstream.mock.calls[1]![0])).toBe('https://agentkit.best/api/build-with-ak/listing');
     const headers = new Headers(upstream.mock.calls[1]![1].headers);
     expect(headers.get('Authorization')).toBe('Bearer delegated-owner-a');
@@ -180,9 +180,43 @@ describe('Per-user Worker OAuth delegation', () => {
     const unauth = await worker.fetch(new Request(resource, { method: 'POST' }), env);
     expect(unauth.status).toBe(401);
     expect(unauth.headers.get('www-authenticate')).toContain('scope="build-with-ak:read"');
+    expect(unauth.headers.get('www-authenticate')).not.toContain('error=');
     const mixed = request(await token()); mixed.headers.set('x-api-key','ck_live_legacy_customer_key');
     expect((await worker.fetch(mixed, env)).status).toBe(400);
     expect(upstream).not.toHaveBeenCalled();
+  });
+  it('rejects an invalid bearer with an invalid_token challenge', async () => {
+    const response = await worker.fetch(request(await token({ aud: 'https://render.agentkit.best/mcp' })), env);
+    expect(response.status).toBe(401);
+    expect(response.headers.get('www-authenticate')).toContain('error="invalid_token"');
+  });
+  it('accepts a fresh token minted by an issuer clock slightly ahead of the Worker', async () => {
+    const now = Math.floor(Date.now() / 1000);
+    const response = await worker.fetch(request(await token({ iat: now + 5, exp: now + 605 })), env);
+    expect(response.status).toBe(200); await response.text();
+  });
+  it('refuses an authorization-server redirect during exchange', async () => {
+    upstream.mockImplementation(async () => new Response(null, { status: 302, headers: { Location: 'https://elsewhere.example/oauth/token' } }));
+    const response = await worker.fetch(request(await token()), env);
+    expect(response.status).toBe(503);
+    expect(upstream).toHaveBeenCalledTimes(1);
+  });
+  it('logs the exchange rejection code without credentials when delegation fails', async () => {
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      upstream.mockImplementation(async () => Response.json({ error: 'invalid_client', error_description: 'Invalid worker credentials' }, { status: 401 }));
+      const subject = await token();
+      const response = await worker.fetch(request(subject), env);
+      expect(response.status).toBe(503);
+      const logged = errors.mock.calls.map(args => args.join(' ')).join('\n');
+      expect(logged).toContain('"upstreamError":"invalid_client"');
+      expect(logged).toContain('"upstreamStatus":401');
+      expect(logged).not.toContain(subject);
+      expect(logged).not.toContain(env.OAUTH_CLIENT_SECRET!);
+      expect(logged).not.toContain('Invalid worker credentials');
+    } finally {
+      errors.mockRestore();
+    }
   });
   it('invalid signed claims stop before exchange', async () => {
     const response = await worker.fetch(request(await token({}, 'grant_id')), env);

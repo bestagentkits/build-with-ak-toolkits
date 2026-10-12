@@ -384,7 +384,9 @@ async function authenticate(request: Request, env: WorkerEnv, url: URL): Promise
       ? { ok: true, credential: { apiKey: validation.apiKey } }
       : { ok: false, challenge: challenge() };
   }
-  if (!bearer) return { ok: false, challenge: challenge() };
+  // No credentials: challenge without an error code (RFC 6750 §3.1) so clients
+  // start authorization instead of treating it as a rejected token.
+  if (!bearer) return { ok: false, challenge: challenge(401, 'unauthorized') };
   if (!env.OAUTH_ISSUER || !env.OAUTH_JWKS_URL) {
     return { ok: false, challenge: challenge(403, 'oauth_not_configured') };
   }
@@ -408,6 +410,7 @@ async function authenticate(request: Request, env: WorkerEnv, url: URL): Promise
     return { ok: false, challenge: challenge(403, 'insufficient_scope', requiredScopes) };
   }
   if (!env.OAUTH_CLIENT_SECRET) {
+    console.error(JSON.stringify({ event: 'oauth_token_exchange_failed', reason: 'missing_client_secret' }));
     return { ok: false, challenge: challenge(503, 'temporarily_unavailable') };
   }
   try {
