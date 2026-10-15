@@ -22,6 +22,12 @@ export class CASConflictError extends Error {
 export interface PushResult {
   listingId: string;
   newDraftRevisionId?: string;
+  created: boolean;
+}
+
+export interface PushOptions {
+  /** Create a new listing (POST /listing) instead of updating the workspace's listing. */
+  createNew?: boolean;
 }
 
 /**
@@ -30,12 +36,26 @@ export interface PushResult {
  * request carrying `expectedDraftRevisionId`. On a 409 the server-authoritative
  * conflict is surfaced as `CASConflictError`.
  */
-export async function pushDraft(client: BuildWithAkClient, store: ProjectStore): Promise<PushResult> {
+export async function pushDraft(client: BuildWithAkClient, store: ProjectStore, options: PushOptions = {}): Promise<PushResult> {
   const doc = store.readDocument();
   const state = store.readState();
 
-  const remote: ListingResponse = await client.getListing();
-  const remoteRevision = remote.listing.draftRevisionId;
+  if (options.createNew) {
+    const created = await client.createListing(compileToWire(doc));
+    store.writeState({
+      ...state,
+      listingId: created.listing.id,
+      baseDraftRevisionId: created.listing.draftRevisionId,
+      lastPulledAt: new Date().toISOString(),
+    });
+    return { listingId: created.listing.id, newDraftRevisionId: created.listing.draftRevisionId, created: true };
+  }
+
+  // The workspace is bound to the listing it last pulled/pushed, so a user with
+  // several listings never overwrites the wrong one.
+  const listingId = state.listingId;
+  const remote: ListingResponse = await client.getListing({ listingId });
+  const remoteRevision = remote.listing?.draftRevisionId;
 
   // A remote draft exists but we have no recorded base revision (never pulled):
   // pushing would blind-overwrite it with no CAS token. Force a pull first.
@@ -53,7 +73,7 @@ export async function pushDraft(client: BuildWithAkClient, store: ProjectStore):
 
   let updated: ListingResponse;
   try {
-    updated = await client.updateListing(wire);
+    updated = await client.updateListing(wire, { listingId });
   } catch (error) {
     if (error instanceof BuildWithAkConflictError) {
       throw new CASConflictError(state.baseDraftRevisionId, remoteRevision);
@@ -71,5 +91,6 @@ export async function pushDraft(client: BuildWithAkClient, store: ProjectStore):
   return {
     listingId: updated.listing.id,
     newDraftRevisionId: updated.listing.draftRevisionId,
+    created: false,
   };
 }

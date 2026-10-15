@@ -2,7 +2,12 @@ import { CliContext } from '../context';
 import { EXIT_CODES, type ExitCode } from '../exit-codes';
 import { handleCommandError } from '../error-handler';
 
-export async function runPull(ctx: CliContext): Promise<ExitCode> {
+export interface PullOptions {
+  /** Owned listing to pull; defaults to the listing this workspace is bound to. */
+  listingId?: string;
+}
+
+export async function runPull(ctx: CliContext, options: PullOptions = {}): Promise<ExitCode> {
   try {
     if (!ctx.store.isInitialized()) {
       ctx.out.failure('No workspace found. Run "build-with-ak init" first.', 'NOT_INITIALIZED');
@@ -10,8 +15,13 @@ export async function runPull(ctx: CliContext): Promise<ExitCode> {
     }
 
     const client = ctx.createClient();
-    const remote = await client.getListing();
-    const blocksResponse = await client.getBlocks();
+    const listingId = options.listingId ?? ctx.store.readState().listingId;
+    const remote = await client.getListing({ listingId });
+    if (!remote.listing) {
+      ctx.out.failure('No listing found. Push with --new to create one.', 'NOT_FOUND');
+      return EXIT_CODES.VALIDATION_ERROR;
+    }
+    const blocksResponse = await client.getBlocks({ listingId: remote.listing.id });
 
     const doc = ctx.store.readDocument();
     const listing = remote.listing;

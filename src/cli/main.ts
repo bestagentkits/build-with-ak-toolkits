@@ -7,6 +7,7 @@ import { runTemplateList, runTemplateApply } from './commands/template';
 import { runSlugCheck } from './commands/slug';
 import { runMediaList, runMediaUpload } from './commands/media';
 import { runPull } from './commands/pull';
+import { runListings } from './commands/listings';
 import { runAnalytics } from './commands/analytics';
 import { runValidate } from './commands/validate';
 import { runDiff } from './commands/diff';
@@ -99,8 +100,18 @@ export function buildProgram(): Command {
   program
     .command('pull')
     .description('pull the remote listing and blocks into the local workspace')
-    .action(async (_opts, command: Command) => {
-      process.exitCode = await runPull(contextFrom(command));
+    .option('--listing-id <uuid>', 'owned listing UUID (defaults to the listing this workspace is bound to, else your oldest)')
+    .action(async (opts, command: Command) => {
+      process.exitCode = await runPull(contextFrom(command), { listingId: opts.listingId });
+    });
+
+  program
+    .command('listings')
+    .description('list your listings and your listing quota (no local workspace required)')
+    .option('--limit <n>', 'page size, 1-100', (v) => Number.parseInt(v, 10))
+    .option('--offset <n>', 'rows to skip', (v) => Number.parseInt(v, 10))
+    .action(async (opts, command: Command) => {
+      process.exitCode = await runListings(contextFrom(command), { limit: opts.limit, offset: opts.offset });
     });
 
   program
@@ -146,10 +157,11 @@ export function buildProgram(): Command {
 
   program
     .command('push')
-    .description('atomic CAS push of the full draft (PUT /listing)')
+    .description('atomic CAS push of the full draft (PUT /listing), or create a new listing with --new')
     .option('--yes', 'skip confirmation')
+    .option('--new', 'create a new listing from this workspace (POST /listing) and bind the workspace to it')
     .action(async (opts, command: Command) => {
-      process.exitCode = await runPush(contextFrom(command), { yes: opts.yes });
+      process.exitCode = await runPush(contextFrom(command), { yes: opts.yes, new: opts.new });
     });
 
   program
