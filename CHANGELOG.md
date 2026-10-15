@@ -4,6 +4,25 @@ All notable changes to `@bestagentkits/build-with-ak` will be documented in this
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-10-15
+
+### 🚀 Features
+
+- feat(mcp): add direct media upload tools (06eec26)
+- feat(listings): support multiple listings per owner (6978052)
+
+### 🐛 Bug Fixes
+
+- fix(oauth): use manual redirect for token exchange on Workers (#16) (1c345a5)
+
+### 🔧 Maintenance & Tooling
+
+- test(mcp): cover OAuth SDK HTTP transport (#14) (f109ef9)
+
+### 📝 Other Changes
+
+- Merge pull request #18 from bestagentkits/feat/multi-listing-tools (59d1242)
+
 ## [1.0.3] - 2026-09-12
 
 ### 🚀 Features
