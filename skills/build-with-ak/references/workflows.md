@@ -8,8 +8,14 @@
 4. Upload each image: `build-with-ak media upload <file> --kind logo|cover|screenshot --ref <key>`. Wire the returned `assetId`/`ref` into blocks and `logoMediaRef`.
 5. `build-with-ak validate` → `build-with-ak validate --ready`. Resolve all issues.
 6. `build-with-ak preview --watch` (visual check) or `--export ./out --offline`.
-7. `build-with-ak push --yes`
+7. `build-with-ak push --yes` — or `build-with-ak push --new --yes` when you already own a listing and this is another product. `--new` creates a listing (`POST /listing`) and binds the workspace to it; `LISTING_QUOTA_EXCEEDED` means the owner must buy an extra submission at the returned `purchaseUrl`.
 8. Request explicit developer approval, then `build-with-ak submit --yes`.
+
+## Several products under one account
+
+- `build-with-ak listings` (MCP `build_with_ak_list_listings`) shows every active listing and the quota (1 free for AgentKit customers, +1 per Publisher purchase, unlimited for admins).
+- Use one workspace per product. `pull --listing-id <uuid>` binds a workspace to that listing; later `pull`, `diff` and `push` reuse the bound id.
+- MCP tools take an optional `listingId`; without it they target the oldest active listing.
 
 ## Layout refresh (existing listing)
 
@@ -33,7 +39,9 @@
 
 | Step | CLI | MCP tool |
 |---|---|---|
-| Read listing | `pull` | `build_with_ak_get_listing`, `build_with_ak_get_blocks` |
+| List listings + quota | `listings` | `build_with_ak_list_listings` |
+| Read listing | `pull [--listing-id UUID]` | `build_with_ak_get_listing`, `build_with_ak_get_blocks` |
+| Create another listing | `push --new` | `build_with_ak_create_listing` |
 | Read analytics | `analytics [--from YYYY-MM-DD] [--to YYYY-MM-DD] [--listing-id UUID]` | `build_with_ak_get_analytics` |
 | List templates | `template list` | `build_with_ak_list_templates` |
 | Apply template | `template apply` | `build_with_ak_apply_template` |

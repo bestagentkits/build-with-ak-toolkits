@@ -1,7 +1,9 @@
 /** Authorization policy, independent of advisory MCP annotations. */
 export const MCP_TOOL_SCOPES: Record<string, 'build-with-ak:read' | 'build-with-ak:write'> = {
   build_with_ak_get_analytics: 'build-with-ak:read',
+  build_with_ak_list_listings: 'build-with-ak:read',
   build_with_ak_get_listing: 'build-with-ak:read',
+  build_with_ak_create_listing: 'build-with-ak:write',
   build_with_ak_update_listing: 'build-with-ak:write',
   build_with_ak_submit_listing: 'build-with-ak:write',
   build_with_ak_validate_listing: 'build-with-ak:read',

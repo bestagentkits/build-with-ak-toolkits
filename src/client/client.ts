@@ -40,6 +40,46 @@ export interface ListingResponse {
   };
 }
 
+/** Request options for listing-scoped endpoints; `listingId` selects one of the caller's listings. */
+export interface ListingRequestOptions extends RequestOptions {
+  /** Owned listing UUID. Omitted targets the caller's oldest active listing (pre-multi-listing behaviour). */
+  listingId?: string;
+}
+
+export interface ListingQuota {
+  /** Maximum active listings, or null when unlimited (admin). */
+  limit: number | null;
+  used: number;
+  remaining: number | null;
+  freeSlots: number;
+  purchasedSlots: number;
+  unlimited: boolean;
+}
+
+export interface OwnedListingSummary {
+  id: string;
+  name: string;
+  slug: string;
+  tagline: string | null;
+  category: string;
+  status: string;
+  upvotesCount: number;
+  publishedAt: string | null;
+  submittedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ListListingsResponse {
+  listings: OwnedListingSummary[];
+  total: number;
+  limit: number;
+  offset: number;
+  quota: ListingQuota;
+  /** Where to buy an extra submission slot when the quota is used up. */
+  purchaseUrl: string;
+}
+
 export interface SubmitListingInput {
   listingId: string;
   expectedDraftRevisionId?: string;
@@ -95,6 +135,15 @@ export interface FinalizeMediaResponse {
 export type MediaKind = 'logo' | 'cover' | 'screenshot';
 export type MediaMimeType = 'image/png' | 'image/jpeg' | 'image/webp';
 
+function splitListingOptions(options?: ListingRequestOptions): {
+  query: Record<string, string | undefined> | undefined;
+  options: RequestOptions | undefined;
+} {
+  if (!options) return { query: undefined, options: undefined };
+  const { listingId, ...rest } = options;
+  return { query: listingId ? { listingId } : undefined, options: rest };
+}
+
 export class BuildWithAkClient {
   private readonly transport: Transport;
   private readonly capabilities: ClientCapabilities;
@@ -122,14 +171,37 @@ export class BuildWithAkClient {
     return this.fetchImpl;
   }
 
-  // ─── Base Endpoints (11) ────────────────────────────────────────────────
+  // ─── Base Endpoints ────────────────────────────────────────────────
 
-  getListing(options?: RequestOptions): Promise<ListingResponse> {
-    return this.transport.request<ListingResponse>({ method: 'GET', path: '/listing', options });
+  /** List the caller's active listings with the listing quota (multi-listing). */
+  listListings(params: { limit?: number; offset?: number } = {}, options?: RequestOptions): Promise<ListListingsResponse> {
+    return this.transport.request<ListListingsResponse>({
+      method: 'GET',
+      path: '/listings',
+      query: {
+        limit: params.limit === undefined ? undefined : String(params.limit),
+        offset: params.offset === undefined ? undefined : String(params.offset),
+      },
+      options,
+    });
   }
 
-  updateListing(input: UpsertListingDraftInput, options?: RequestOptions): Promise<ListingResponse> {
-    return this.transport.request<ListingResponse>({ method: 'PUT', path: '/listing', body: input, options });
+  getListing(options?: ListingRequestOptions): Promise<ListingResponse> {
+    const { query, options: rest } = splitListingOptions(options);
+    return this.transport.request<ListingResponse>({ method: 'GET', path: '/listing', query, options: rest });
+  }
+
+  updateListing(input: UpsertListingDraftInput, options?: ListingRequestOptions): Promise<ListingResponse> {
+    const { query, options: rest } = splitListingOptions(options);
+    return this.transport.request<ListingResponse>({ method: 'PUT', path: '/listing', query, body: input, options: rest });
+  }
+
+  /**
+   * Create another listing (POST /listing). Fails with 409 LISTING_QUOTA_EXCEEDED
+   * when the owner has no free slot; the error details carry the quota and purchaseUrl.
+   */
+  createListing(input: UpsertListingDraftInput, options?: RequestOptions): Promise<ListingResponse> {
+    return this.transport.request<ListingResponse>({ method: 'POST', path: '/listing', body: input, options });
   }
 
   submitListing(input: SubmitListingInput, options?: RequestOptions): Promise<SubmitListingResponse> {
@@ -140,37 +212,50 @@ export class BuildWithAkClient {
     return this.transport.request<SubmitListingResponse>({ method: 'POST', path: '/listing/submit', body, options });
   }
 
-  getBlocks(options?: RequestOptions): Promise<BlocksResponse> {
-    return this.transport.request<BlocksResponse>({ method: 'GET', path: '/listing/blocks', options });
+  getBlocks(options?: ListingRequestOptions): Promise<BlocksResponse> {
+    const { query, options: rest } = splitListingOptions(options);
+    return this.transport.request<BlocksResponse>({ method: 'GET', path: '/listing/blocks', query, options: rest });
   }
 
-  replaceBlocks(blocks: BuildWithAkBlock[], options?: RequestOptions): Promise<BlocksResponse> {
-    return this.transport.request<BlocksResponse>({ method: 'PUT', path: '/listing/blocks', body: { blocks }, options });
+  replaceBlocks(blocks: BuildWithAkBlock[], options?: ListingRequestOptions): Promise<BlocksResponse> {
+    const { query, options: rest } = splitListingOptions(options);
+    return this.transport.request<BlocksResponse>({ method: 'PUT', path: '/listing/blocks', query, body: { blocks }, options: rest });
   }
 
-  addBlock(block: BuildWithAkInsertBlockInput, options?: RequestOptions): Promise<{ block: BuildWithAkBlock }> {
-    return this.transport.request<{ block: BuildWithAkBlock }>({ method: 'POST', path: '/listing/blocks', body: block, options });
+  addBlock(block: BuildWithAkInsertBlockInput, options?: ListingRequestOptions): Promise<{ block: BuildWithAkBlock }> {
+    const { query, options: rest } = splitListingOptions(options);
+    return this.transport.request<{ block: BuildWithAkBlock }>({ method: 'POST', path: '/listing/blocks', query, body: block, options: rest });
   }
 
-  patchBlock(blockId: string, patch: BuildWithAkPatchBlockInput, options?: RequestOptions): Promise<{ block: BuildWithAkBlock }> {
+  patchBlock(blockId: string, patch: BuildWithAkPatchBlockInput, options?: ListingRequestOptions): Promise<{ block: BuildWithAkBlock }> {
+    const { query, options: rest } = splitListingOptions(options);
     return this.transport.request<{ block: BuildWithAkBlock }>({
       method: 'PATCH',
       path: `/listing/blocks/${encodeURIComponent(blockId)}`,
+      query,
       body: patch,
-      options,
+      options: rest,
     });
   }
 
-  deleteBlock(blockId: string, options?: RequestOptions): Promise<{ success: boolean }> {
-    return this.transport.request<{ success: boolean }>({ method: 'DELETE', path: `/listing/blocks/${encodeURIComponent(blockId)}`, options });
+  deleteBlock(blockId: string, options?: ListingRequestOptions): Promise<{ success: boolean }> {
+    const { query, options: rest } = splitListingOptions(options);
+    return this.transport.request<{ success: boolean }>({
+      method: 'DELETE',
+      path: `/listing/blocks/${encodeURIComponent(blockId)}`,
+      query,
+      options: rest,
+    });
   }
 
-  reorderBlocks(blockIds: string[], options?: RequestOptions): Promise<{ success: boolean }> {
+  reorderBlocks(blockIds: string[], options?: ListingRequestOptions): Promise<{ success: boolean }> {
+    const { query, options: rest } = splitListingOptions(options);
     return this.transport.request<{ success: boolean }>({
       method: 'POST',
       path: '/listing/blocks/reorder',
+      query,
       body: { blockIds },
-      options,
+      options: rest,
     });
   }
 

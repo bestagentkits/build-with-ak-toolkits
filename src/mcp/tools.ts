@@ -60,6 +60,19 @@ async function guard(fn: () => Promise<McpToolResult>): Promise<McpToolResult> {
 }
 
 const mediaKindSchema = z.enum(['logo', 'cover', 'screenshot']);
+const listingIdSchema = z
+  .string()
+  .uuid()
+  .optional()
+  .describe('Owned listing UUID from build_with_ak_list_listings. Omitted targets your oldest active listing.');
+const listingSelectorSchema = z.object({ listingId: listingIdSchema });
+const updateListingInputSchema = upsertListingDraftSchema.extend({ listingId: listingIdSchema });
+const listListingsInputSchema = z.object({
+  limit: z.number().int().min(1).max(100).optional().describe('Page size, 1-100 (server default 20).'),
+  offset: z.number().int().min(0).optional().describe('Rows to skip (default 0).'),
+});
+const patchBlockInputSchema = z.object({ blockId: z.string(), patch: patchBlockSchema, listingId: listingIdSchema });
+const reorderBlocksInputSchema = z.object({ blockIds: z.array(z.string()).min(1), listingId: listingIdSchema });
 const mediaMimeSchema = z.enum(['image/png', 'image/jpeg', 'image/webp']);
 
 export function createTools(services: McpServices): McpToolDefinition[] {
@@ -73,21 +86,44 @@ export function createTools(services: McpServices): McpToolDefinition[] {
       handler: (args) => guard(async () => ok(await services.getClient().getAnalytics(analyticsQuerySchema.parse(args)))),
     },
     {
-      name: 'build_with_ak_get_listing',
-      title: 'Get Listing',
-      description: 'Read the remote listing and its current draft revision metadata.',
-      inputSchema: z.object({}),
-      handler: () => guard(async () => ok(await services.getClient().getListing())),
+      name: 'build_with_ak_list_listings',
+      title: 'List My Listings',
+      description: 'List your active listings (oldest first) with the listing quota: an AgentKit customer gets 1 free listing, each Publisher purchase adds 1, admins are unlimited. Use a returned id as listingId on the other tools.',
+      inputSchema: listListingsInputSchema,
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+      handler: (args) => guard(async () => ok(await services.getClient().listListings(listListingsInputSchema.parse(args ?? {})))),
     },
     {
-      name: 'build_with_ak_update_listing',
-      title: 'Update Listing (CAS)',
-      description: 'Atomic full-draft save via PUT /listing, including Activities and Pulse blocks. Pass expectedDraftRevisionId for CAS protection. Activities contain real dated product updates. Pulse accepts only type and title; monitoring is server-managed after publication.',
+      name: 'build_with_ak_get_listing',
+      title: 'Get Listing',
+      description: 'Read a remote listing and its current draft revision metadata. Pass listingId to pick one of several listings.',
+      inputSchema: listingSelectorSchema,
+      handler: (args) =>
+        guard(async () => {
+          const { listingId } = listingSelectorSchema.parse(args ?? {});
+          return ok(await services.getClient().getListing({ listingId }));
+        }),
+    },
+    {
+      name: 'build_with_ak_create_listing',
+      title: 'Create Listing',
+      description: 'Create another listing via POST /listing with a full draft (same shape as update_listing, without listingId or expectedDraftRevisionId). Fails with LISTING_QUOTA_EXCEEDED when no slot is free; the error carries quota and purchaseUrl for an extra submission.',
       inputSchema: upsertListingDraftSchema as unknown as z.ZodObject<z.ZodRawShape>,
       handler: (args) =>
         guard(async () => {
           const input = upsertListingDraftSchema.parse(args);
-          return ok(await services.getClient().updateListing(input));
+          return ok(await services.getClient().createListing(input));
+        }),
+    },
+    {
+      name: 'build_with_ak_update_listing',
+      title: 'Update Listing (CAS)',
+      description: 'Atomic full-draft save via PUT /listing, including Activities and Pulse blocks. Pass listingId to target one of several listings and expectedDraftRevisionId for CAS protection. Activities contain real dated product updates. Pulse accepts only type and title; monitoring is server-managed after publication.',
+      inputSchema: updateListingInputSchema as unknown as z.ZodObject<z.ZodRawShape>,
+      handler: (args) =>
+        guard(async () => {
+          const { listingId, ...input } = updateListingInputSchema.parse(args);
+          return ok(await services.getClient().updateListing(input, { listingId }));
         }),
     },
     {
@@ -180,30 +216,34 @@ export function createTools(services: McpServices): McpToolDefinition[] {
     {
       name: 'build_with_ak_get_blocks',
       title: 'Get Blocks',
-      description: 'Read the current draft blocks.',
-      inputSchema: z.object({}),
-      handler: () => guard(async () => ok(await services.getClient().getBlocks())),
+      description: 'Read the current draft blocks. Pass listingId to pick one of several listings.',
+      inputSchema: listingSelectorSchema,
+      handler: (args) =>
+        guard(async () => {
+          const { listingId } = listingSelectorSchema.parse(args ?? {});
+          return ok(await services.getClient().getBlocks({ listingId }));
+        }),
     },
     {
       name: 'build_with_ak_patch_block',
       title: 'Patch Block',
-      description: 'Quick-edit an individual block content or order.',
-      inputSchema: z.object({ blockId: z.string(), patch: patchBlockSchema }),
+      description: 'Quick-edit an individual block content or order. Pass listingId to pick one of several listings.',
+      inputSchema: patchBlockInputSchema,
       handler: (args) =>
         guard(async () => {
-          const { blockId, patch } = z.object({ blockId: z.string(), patch: patchBlockSchema }).parse(args);
-          return ok(await services.getClient().patchBlock(blockId, patch));
+          const { blockId, patch, listingId } = patchBlockInputSchema.parse(args);
+          return ok(await services.getClient().patchBlock(blockId, patch, { listingId }));
         }),
     },
     {
       name: 'build_with_ak_reorder_blocks',
       title: 'Reorder Blocks',
-      description: 'Reorder the block ID sequence.',
-      inputSchema: z.object({ blockIds: z.array(z.string()).min(1) }),
+      description: 'Reorder the block ID sequence. Pass listingId to pick one of several listings.',
+      inputSchema: reorderBlocksInputSchema,
       handler: (args) =>
         guard(async () => {
-          const { blockIds } = z.object({ blockIds: z.array(z.string()).min(1) }).parse(args);
-          return ok(await services.getClient().reorderBlocks(blockIds));
+          const { blockIds, listingId } = reorderBlocksInputSchema.parse(args);
+          return ok(await services.getClient().reorderBlocks(blockIds, { listingId }));
         }),
     },
     {

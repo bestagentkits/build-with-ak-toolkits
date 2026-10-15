@@ -16,8 +16,9 @@ export async function runDiff(ctx: CliContext): Promise<ExitCode> {
     const local = compileToWire(doc);
 
     const client = ctx.createClient();
-    const remote = await client.getListing();
-    const remoteBlocks = await client.getBlocks();
+    const listingId = ctx.store.readState().listingId;
+    const remote = await client.getListing({ listingId });
+    const remoteBlocks = await client.getBlocks({ listingId });
     const remoteWire = {
       ...(remote.listing as unknown as UpsertListingDraftInput),
       blocks: remoteBlocks.blocks,

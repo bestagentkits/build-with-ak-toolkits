@@ -89,11 +89,15 @@ Use `https://bwak.agentkit.best/mcp` with browser OAuth or a legacy `x-api-key` 
 
 ## Tools
 
-Core (both transports): `build_with_ak_get_listing`, `_get_analytics`, `_update_listing`, `_submit_listing`, `_validate_listing`, `_list_templates`, `_apply_template`, `_check_slug_availability`, `_list_media_assets`, `_get_blocks`, `_patch_block`, `_reorder_blocks`, `_upload_media_payload`.
+Core (both transports): `build_with_ak_list_listings`, `_get_listing`, `_create_listing`, `_get_analytics`, `_update_listing`, `_submit_listing`, `_validate_listing`, `_list_templates`, `_apply_template`, `_check_slug_availability`, `_list_media_assets`, `_get_blocks`, `_patch_block`, `_reorder_blocks`, `_upload_media_payload`.
 
 `build_with_ak_get_analytics` is read-only. Optional arguments: `listingId` (owned UUID), `from`, `to` (inclusive UTC `YYYY-MM-DD`). Defaults to the active listing and last 30 days; maximum 366 days, no future end date. Returns listing/period/source/generatedAt, totals, and zero-filled daily rows. Views deduplicate per IP + user agent/day; clicks are redirect requests; `referralConversions` is always `null` in totals and every daily row because tracking is not instrumented. Report unavailable; do not infer conversions, conversion rates, or external product sales. Uses existing credentials on both transports; no workspace or target-extension flag is needed.
 
 stdio-only: `build_with_ak_upload_media_file` (reads a local workspace path).
+
+### Multiple listings
+
+An owner can hold several active listings: an AgentKit customer gets one free listing, each Publisher purchase adds one, and admins are unlimited. `build_with_ak_list_listings` returns the listings (oldest first) with the quota and a `purchaseUrl`. `build_with_ak_create_listing` creates another listing from a full draft (`POST /listing`) and fails with `LISTING_QUOTA_EXCEEDED` (quota and `purchaseUrl` in the error details) when no slot is free. `get_listing`, `update_listing`, `get_blocks`, `patch_block` and `reorder_blocks` take an optional `listingId`; omitted, they target the oldest active listing, as earlier versions did. A taken slug fails with `SLUG_TAKEN`.
 
 ### Activities, Pulse, and video authoring
 
