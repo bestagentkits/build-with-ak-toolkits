@@ -14,6 +14,8 @@ export const MCP_TOOL_SCOPES: Record<string, 'build-with-ak:read' | 'build-with-
   build_with_ak_get_blocks: 'build-with-ak:read',
   build_with_ak_patch_block: 'build-with-ak:write',
   build_with_ak_reorder_blocks: 'build-with-ak:write',
+  build_with_ak_create_upload_intent: 'build-with-ak:write',
+  build_with_ak_finalize_media: 'build-with-ak:write',
   build_with_ak_upload_media_payload: 'build-with-ak:write',
   build_with_ak_upload_media_file: 'build-with-ak:write',
 };

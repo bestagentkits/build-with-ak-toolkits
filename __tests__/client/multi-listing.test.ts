@@ -87,3 +87,19 @@ describe('multi-listing MCP tools', () => {
     expect(bad.isError).toBe(true);
   });
 });
+
+describe('direct media upload MCP tools', () => {
+  it('returns the intent with PUT instructions and finalizes the staged object', async () => {
+    const client = {
+      createUploadIntent: vi.fn(async () => ({ intentId: 'i', presignedUrl: 'https://r2/x?sig', stagingKey: 'k', maxByteSize: 1, expiresIn: 60 })),
+      finalizeMedia: vi.fn(async () => ({ success: true, assetId: LISTING_ID })),
+    };
+    const services = { transport: 'http', getClient: () => client, uploadFromPayload: vi.fn() } as unknown as McpServices;
+    const all = createTools(services);
+    const intent = await all.find((t) => t.name === 'build_with_ak_create_upload_intent')!.handler({ kind: 'cover', mimeType: 'image/webp' });
+    expect(JSON.parse(intent.content[0]!.text)).toMatchObject({ stagingKey: 'k', method: 'PUT', headers: { 'Content-Type': 'image/webp' } });
+    await all.find((t) => t.name === 'build_with_ak_finalize_media')!.handler({ stagingKey: 'k', kind: 'cover' });
+    expect(client.finalizeMedia).toHaveBeenCalledWith('k', 'cover');
+    expect(MCP_TOOL_SCOPES.build_with_ak_finalize_media).toBe('build-with-ak:write');
+  });
+});

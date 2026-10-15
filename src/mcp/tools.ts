@@ -247,6 +247,29 @@ export function createTools(services: McpServices): McpToolDefinition[] {
         }),
     },
     {
+      name: 'build_with_ak_create_upload_intent',
+      title: 'Create Media Upload Intent',
+      description: 'Step 1 of a direct upload for files you can PUT yourself (e.g. with curl), avoiding base64 in the tool call. Returns a short-lived presignedUrl and stagingKey. Then PUT the raw bytes to presignedUrl with the same Content-Type and NO auth header, and call build_with_ak_finalize_media. The presignedUrl is a temporary credential: do not log or share it.',
+      inputSchema: z.object({ kind: mediaKindSchema, mimeType: mediaMimeSchema }),
+      handler: (args) =>
+        guard(async () => {
+          const { kind, mimeType } = z.object({ kind: mediaKindSchema, mimeType: mediaMimeSchema }).parse(args);
+          const intent = await services.getClient().createUploadIntent(kind, mimeType);
+          return ok({ ...intent, method: 'PUT', headers: { 'Content-Type': mimeType }, next: 'build_with_ak_finalize_media' });
+        }),
+    },
+    {
+      name: 'build_with_ak_finalize_media',
+      title: 'Finalize Media Upload',
+      description: 'Step 2 of a direct upload: after the PUT to presignedUrl succeeds, finalize the staged object into an owned asset. Returns assetId for logoAssetId, coverAssetId or gallery blocks.',
+      inputSchema: z.object({ stagingKey: z.string().min(1), kind: mediaKindSchema }),
+      handler: (args) =>
+        guard(async () => {
+          const { stagingKey, kind } = z.object({ stagingKey: z.string().min(1), kind: mediaKindSchema }).parse(args);
+          return ok(await services.getClient().finalizeMedia(stagingKey, kind));
+        }),
+    },
+    {
       name: 'build_with_ak_upload_media_payload',
       title: 'Upload Media (Payload)',
       description: `Upload a bounded base64 image payload (< ${MAX_PAYLOAD_BYTES} bytes) via the 3-step pipeline.`,

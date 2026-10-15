@@ -89,7 +89,9 @@ Use `https://bwak.agentkit.best/mcp` with browser OAuth or a legacy `x-api-key` 
 
 ## Tools
 
-Core (both transports): `build_with_ak_list_listings`, `_get_listing`, `_create_listing`, `_get_analytics`, `_update_listing`, `_submit_listing`, `_validate_listing`, `_list_templates`, `_apply_template`, `_check_slug_availability`, `_list_media_assets`, `_get_blocks`, `_patch_block`, `_reorder_blocks`, `_upload_media_payload`.
+Core (both transports): `build_with_ak_list_listings`, `_get_listing`, `_create_listing`, `_get_analytics`, `_update_listing`, `_submit_listing`, `_validate_listing`, `_list_templates`, `_apply_template`, `_check_slug_availability`, `_list_media_assets`, `_get_blocks`, `_patch_block`, `_reorder_blocks`, `_upload_media_payload`, `_create_upload_intent`, `_finalize_media`.
+
+For images larger than a comfortable base64 payload, use the direct path: `build_with_ak_create_upload_intent` → `PUT` the bytes to the returned `presignedUrl` with the same `Content-Type` and no auth header → `build_with_ak_finalize_media`. The presigned URL is a short-lived credential; do not log it.
 
 `build_with_ak_get_analytics` is read-only. Optional arguments: `listingId` (owned UUID), `from`, `to` (inclusive UTC `YYYY-MM-DD`). Defaults to the active listing and last 30 days; maximum 366 days, no future end date. Returns listing/period/source/generatedAt, totals, and zero-filled daily rows. Views deduplicate per IP + user agent/day; clicks are redirect requests; `referralConversions` is always `null` in totals and every daily row because tracking is not instrumented. Report unavailable; do not infer conversions, conversion rates, or external product sales. Uses existing credentials on both transports; no workspace or target-extension flag is needed.
 
